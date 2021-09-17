@@ -8,8 +8,11 @@ short_desc="A lightweight approach to removing Google web service dependency"
 maintainer="Dainra <https://github.com/DAINRA/ungoogled-chromium-void>"
 license="BSD-3-Clause"
 homepage="https://github.com/Eloston/ungoogled-chromium/"
-distfiles="https://commondatastorage.googleapis.com/chromium-browser-official/chromium-${version}.tar.xz $homepage/archive/refs/tags/${version}-${revision}.tar.gz"
-checksum="5d66214858fcba11a8f733d7a6fab61ed10e13e7df4ed37e63b66a0370fb2853"
+# work-around to download PR tarball instead of release tarball from ungoogled-chromium
+commit_id="1835aef1e831ad784b2513908761439bb6d37834"
+distfiles="https://commondatastorage.googleapis.com/chromium-browser-official/chromium-${version}.tar.xz ${homepage}/archive/"
+if [ -z ${commit_id} ]; then distfiles+="refs/tags/${version}-${revision}.tar.gz"; else distfiles+="${commit_id}.tar.gz"; fi
+checksum="5d66214858fcba11a8f733d7a6fab61ed10e13e7df4ed37e63b66a0370fb2853 0e2a9b9e79a9cb16d53a1708a794aeb840ee1eae185c078ce8588956348e0ec8"
 nocross=yes
 
 lib32disabled=yes
@@ -45,7 +48,12 @@ esac
 
 post_extract() {
     mv ${XBPS_BUILDDIR}/chromium-${version} ${wrksrc}
-    mv ${XBPS_BUILDDIR}/${pkgname}-${version}-${revision} ${wrksrc}
+    if [ -z ${commit_id} ]; then
+        mv ${XBPS_BUILDDIR}/${pkgname}-${version}-${revision} ${wrksrc}
+    else
+        distfiles+="${commit_id}.tar.gz";
+        mv ${XBPS_BUILDDIR}/${pkgname}-${commit_id} ${wrksrc}/${pkgname}-${version}-${revision}
+    fi
 }
 
 post_patch() {
@@ -92,9 +100,7 @@ post_patch() {
 
     # Apply patches that interfere with Ungoogled Chromium patching process
     echo "-> applying conflicting patches ..."
-	if [ "$build_option_sndio" ]; then
-        patch -Np1 -i ${FILESDIR}/sndio.patch
-    fi
+	if [ "$build_option_sndio" ]; then patch -Np1 -i ${FILESDIR}/sndio.patch; fi
 }
 do_configure() {
 	local system="" conf=()
@@ -279,15 +285,17 @@ do_configure() {
     # Disable widevine on musl builds since it's not available anyway.
     case $XBPS_TARGET_LIBC in
         musl) conf+=( enable_widevine=false ) ;;
-        *) conf+=( enable_widevine=false ) ;;
+        *) conf+=( enable_widevine=true ) ;;
     esac
 
     # Check if sndio was specified as a build option
 	if [ "$build_option_sndio" ]; then conf+=('use_sndio=true'); fi
 
-    echo "-> listing gn args ..."
-    gn args --list out/Release
 	out/Release/gn gen out/Release --args="${conf[*]}"
+    
+    # no real purpose other than to verify if build flags are set up
+    echo "-> listing gn args ..."
+    out/Release/gn args --list out/Release
 }
 do_build() {
 	if [ "$build_option_clang" ]; then
