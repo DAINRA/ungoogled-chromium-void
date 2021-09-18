@@ -2,12 +2,15 @@ name: Create Release
 
 on:
   push:
+    branches:
+      - master
     tags:
       - 'v*'
 
 jobs:
   build:
     name: Create Release
+    if: github.ref == 'refs/heads/master'
     runs-on: ubuntu-latest
     steps:
       - name: Create Release
