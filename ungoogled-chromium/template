@@ -1,0 +1,342 @@
+# Template file for 'ungoogled-chromium'
+pkgname=ungoogled-chromium
+# See https://chromiumdash.appspot.com/releases?platform=Linux for the latest version
+version=93.0.4577.82
+revision=1
+archs="i686* x86_64* aarch64* armv7l* ppc64le*"
+short_desc="A lightweight approach to removing Google web service dependency"
+maintainer="Dainra <https://github.com/DAINRA/ungoogled-chromium-void>"
+license="BSD-3-Clause"
+homepage="https://github.com/Eloston/ungoogled-chromium/"
+# work-around to download PR tarball instead of release tarball from ungoogled-chromium
+# commit_id="1835aef1e831ad784b2513908761439bb6d37834"
+distfiles="https://commondatastorage.googleapis.com/chromium-browser-official/chromium-${version}.tar.xz ${homepage}/archive/"
+if [ -z ${commit_id} ]; then distfiles+="refs/tags/${version}-${revision}.tar.gz"; else distfiles+="${commit_id}.tar.gz"; fi
+checksum="5d66214858fcba11a8f733d7a6fab61ed10e13e7df4ed37e63b66a0370fb2853 ac6ff40201f389ca43a07563f7fefc2b33f956f7867d7fa8ff65312019496640"
+nocross=yes
+
+lib32disabled=yes
+
+build_options="clang vaapi pulseaudio pipewire"
+build_options_default="clang vaapi pulseaudio pipewire"
+desc_option_clang="Use clang to build"
+desc_option_debug="Build with debug symbols"
+desc_option_js_optimize="Optimize the JS used for Chromium's UI"
+desc_option_vaapi="Enable support for VA-API"
+desc_option_pulseaudio="Enable support for PulseAudio"
+desc_option_sndio="Enable support for sndio"
+desc_option_pipewire="Enable support for screen sharing for WebRTC via PipeWire"
+
+hostmakedepends="$(vopt_if clang "clang lld") python pkgconf perl gperf bison ninja nodejs hwids
+ libatomic-devel libevent-devel libglib-devel $(vopt_if js_optimize openjdk)"
+makedepends="libpng-devel gtk+-devel gtk+3-devel nss-devel pciutils-devel
+ libXi-devel libgcrypt-devel libgnome-keyring-devel cups-devel elfutils-devel
+ libXcomposite-devel speech-dispatcher-devel libXrandr-devel mit-krb5-devel
+ libXScrnSaver-devel alsa-lib-devel snappy-devel libdrm-devel
+ libxml2-devel libxslt-devel $(vopt_if pulseaudio pulseaudio-devel) libexif-devel
+ libXcursor-devel libflac-devel speex-devel libmtp-devel libwebp-devel
+ libjpeg-turbo-devel libevent-devel json-c-devel harfbuzz-devel
+ minizip-devel jsoncpp-devel zlib-devel libcap-devel libXdamage-devel
+ re2-devel fontconfig-devel freetype-devel opus-devel
+ ffmpeg-devel libva-devel python-setuptools xcb-proto libcurl-devel
+ $(vopt_if pipewire pipewire-devel) $(vopt_if sndio sndio-devel)"
+depends="libexif hwids desktop-file-utils hicolor-icon-theme xdg-utils"
+
+case "$XBPS_TARGET_MACHINE" in
+	ppc64*-musl) makedepends+=" libucontext-devel" ;;
+esac
+
+post_extract() {
+    mv ${XBPS_BUILDDIR}/chromium-${version} ${wrksrc}
+    if [ -z ${commit_id} ]; then
+        mv ${XBPS_BUILDDIR}/${pkgname}-${version}-${revision} ${wrksrc}
+    else
+        distfiles+="${commit_id}.tar.gz";
+        mv ${XBPS_BUILDDIR}/${pkgname}-${commit_id} ${wrksrc}/${pkgname}-${version}-${revision}
+    fi
+}
+
+post_patch() {
+	if [ "$XBPS_TARGET_LIBC" = "musl" ]; then
+		for f in "${FILESDIR}"/musl-patches/*.patch; do
+			echo "Applying $f"
+			patch -Np0 -i "$f"
+		done
+	fi
+
+	case "${XBPS_TARGET_MACHINE}" in
+	i686*)
+		for f in "${FILESDIR}"/i686-patches/*.patch; do
+			echo "Applying $f"
+			patch -Np0 -i "$f"
+		done
+		;;
+	esac
+
+	# Use the file at run time instead of effectively compiling it in
+	sed 's|//third_party/usb_ids/usb.ids|/usr/share/hwdata/usb.ids|g' \
+		-i services/device/public/cpp/usb/BUILD.gn
+
+	if [ -z "$build_option_clang" ]; then
+		# Work around bug in blink in which GCC 6 optimizes away null pointer checks
+		# https://bugs.debian.org/cgi-bin/bugreport.cgi?bug=833524
+		# https://gcc.gnu.org/bugzilla/show_bug.cgi?id=68853#c2
+		sed -i '/config("compiler")/ a cflags_cc = [ "-fno-delete-null-pointer-checks" ]' \
+			build/config/linux/BUILD.gn
+	fi
+
+	# prevent annoying errors when regenerating gni
+	vsed -i 's,^update_readme$,#update_readme,' \
+		third_party/libvpx/generate_gni.sh
+
+    # Ungoogled Chromium prune, patch, domain substitution
+    local UCDIR=${pkgname}-${version}-${revision}
+    echo "-> ungoogled-chromium: pruning binaries ..."
+    $UCDIR/utils/prune_binaries.py . $UCDIR/pruning.list
+    echo "-> ungoogled-chromium: applying patches ..."
+    $UCDIR/utils/patches.py apply . $UCDIR/patches
+    echo "-> ungoogled-chromium: domain substitution ..."
+    $UCDIR/utils/domain_substitution.py apply -r $UCDIR/domain_regex.list -f $UCDIR/domain_substitution.list -c build/domsubcache.tar.gz .
+
+    # Apply patches that interfere with Ungoogled Chromium patching process
+    echo "-> applying conflicting patches ..."
+	if [ "$build_option_sndio" ]; then patch -Np1 -i ${FILESDIR}/sndio.patch; fi
+}
+do_configure() {
+	local system="" conf=()
+	export -n CFLAGS CXXFLAGS LDFLAGS
+
+	if [ "$build_option_clang" ]; then
+		export CC=clang
+		export CXX=clang++
+	fi
+
+	export LDFLAGS="-pthread"
+
+	# compile gn early, so it can be used to generate gni stuff
+	AR="ar" CC=$CC_FOR_BUILD CXX=$CXX_FOR_BUILD LD=$CXX_FOR_BUILD \
+	tools/gn/bootstrap/bootstrap.py --skip-generate-buildfiles
+
+	# we need to generate ppc64 stuff for libvpx as it's not shipped
+	# this has to be done before unbundling, but after gn is built
+	# comment out if we switch back to system libvpx again later
+	case "$XBPS_TARGET_MACHINE" in
+		ppc64*)
+			pushd third_party/libvpx
+			mkdir -p source/config/linux/ppc64
+			# need PATH to find gn
+			PATH="${wrksrc}/out/Release:$PATH" ./generate_gni.sh || \
+				msg_error "failed to generate libvpx gni"
+			popd
+			;;
+	esac
+
+	# Use system-provided libraries.
+	# TODO: use_system_hunspell (upstream changes needed).
+	# TODO: use_system_libsrtp.
+	# TODO: use_system_libusb (http://crbug.com/266149).
+	# TODO: use_system_ssl (http://crbug.com/58087).
+	# TODO: use_system_sqlite (http://crbug.com/22208).
+	# TODO: use_system_icu (segfaults)
+	# XXX xtraeme: broken currently
+	# use_system_protobuf
+	# use_system_v8=1
+	# use_system_zlib=1
+	# bzip2 jsoncpp minizip xdg_utils speex
+	system="
+		ffmpeg
+		flac
+		fontconfig
+		freetype
+		harfbuzz-ng
+		libdrm
+		libevent
+		libjpeg
+		libpng
+		libwebp
+		libxml
+		libxslt
+		opus
+		re2
+		snappy
+	"
+
+	# remove build scripts for system provided dependencies - basically does the
+	# same as the bundeled script to remove bundeled libs, but this way we don't
+	# have to list the remaining libs
+	for LIB in ${system} libjpeg_turbo; do
+		find -type f -path "*third_party/$LIB/*" \
+			\! -path "*third_party/$LIB/chromium/*" \
+			\! -path "*third_party/$LIB/google/*" \
+			\! -path './base/third_party/icu/*' \
+			\! -path './third_party/pdfium/third_party/freetype/include/pstables.h' \
+			\! -path './third_party/harfbuzz-ng/utils/hb_scoped.h' \
+			\! -regex '.*\.\(gn\|gni\|isolate\|py\)' \
+			-delete
+	done
+
+	# switch to system provided dependencies
+	build/linux/unbundle/replace_gn_files.py --system-libraries ${system}
+
+	third_party/libaddressinput/chromium/tools/update-strings.py
+
+	conf=(
+		# 'enable_nacl=false'
+		# 'enable_nacl_nonsfi=false'
+
+		'use_sysroot=false'
+		'custom_toolchain="//build/toolchain/linux/unbundle:default"'
+		'host_toolchain="//build/toolchain/linux/unbundle:default"'
+
+		"is_clang=$(vopt_if clang true false)"
+		"use_lld=$(vopt_if clang true false)"
+		# 'clang_use_chrome_plugins=false'
+
+		"gold_path=\"${XBPS_CROSS_BASE}/usr/bin/ld.gold\""
+		'use_custom_libcxx=false'
+		'use_gold=false'
+
+		# is_debug makes the build a debug build, changes some things.
+		# might be useful for real debugging vs just debug symbols.
+		"is_debug=false"
+		"blink_symbol_level=$(vopt_if debug 1 0)"
+		"symbol_level=$(vopt_if debug 1 0)"
+
+		'icu_use_data_file=true'
+
+		'use_allocator="none"'
+		'use_allocator_shim=false'
+
+		# 'enable_widevine=true'
+		# 'enable_hangout_services_extension=true'
+
+		'use_system_harfbuzz=true'
+
+		'use_cups=true'
+
+		"use_vaapi=$(vopt_if vaapi true false)"
+
+		# https://chromium.googlesource.com/chromium/src/+/master/docs/closure_compilation.md
+		# "enable_js_type_check=$(vopt_if js_optimize true false)"
+
+		"use_pulseaudio=$(vopt_if pulseaudio true false)"
+		"link_pulseaudio=$(vopt_if pulseaudio true false)"
+
+		"rtc_use_pipewire=$(vopt_if pipewire true false)"
+
+		# "use_sndio=$(vopt_if sndio true false)"
+
+		# Always support proprietary codecs.
+		# Enable H.264 support in bundled ffmpeg.
+		'proprietary_codecs=true'
+		'ffmpeg_branding="Chrome"'
+
+		# Make sure that -Werror doesn't get added to CFLAGS by the build system.
+		# Depending on GCC version the warnings are different and we don't want
+		# the build to fail because of that.
+		# 'treat_warnings_as_errors=false'
+		'fatal_linker_warnings=false'
+
+		# Save space by removing DLOG and DCHECK messages (about 6% reduction).
+		# 'logging_like_official_build=true'
+		# 'fieldtrial_testing_like_official_build=true'
+	)
+
+	# this does not work on ppc64 yet
+	case "$XBPS_TARGET_MACHINE" in
+		ppc64*) conf+=( "enable_jxl_decoder=false" );;
+	esac
+
+	case "${XBPS_TARGET_MACHINE}" in
+		x86_64*) conf+=( 'target_cpu="x64"' ) ;;
+		i686*) conf+=( 'target_cpu="x86"' ) ;;
+		arm*) conf+=( 'target_cpu="arm"' ) ;;
+		aarch64*) conf+=( 'target_cpu="arm64"' ) ;;
+		ppc64*) conf+=( 'target_cpu="ppc64"' ) ;;
+	esac
+
+    # Ungoogled Chromium flags.gn
+    conf+=(
+        'build_with_tflite_lib=false'
+        'chrome_pgo_phase=0'
+        'clang_use_chrome_plugins=false'
+        'enable_hangout_services_extension=false'
+        'enable_js_type_check=false'
+        'enable_mdns=false'
+        'enable_mse_mpeg2ts_stream_parser=true'
+        'enable_nacl=false'
+        'enable_nacl_nonsfi=false'
+        'enable_one_click_signin=false'
+        'enable_reading_list=false'
+        'enable_remoting=false'
+        'enable_reporting=false'
+        'enable_service_discovery=false'
+        'exclude_unwind_tables=true'
+        'fieldtrial_testing_like_official_build=true'
+        'google_api_key=""'
+        'google_default_client_id=""'
+        'google_default_client_secret=""'
+        'safe_browsing_mode=0'
+        'treat_warnings_as_errors=false'
+        'use_official_google_api_keys=false'
+        'use_unofficial_version_number=false'
+    )
+
+    # Disable widevine on musl builds since it's not available anyway.
+    case $XBPS_TARGET_LIBC in
+        musl) conf+=( enable_widevine=false ) ;;
+        *) conf+=( enable_widevine=true ) ;;
+    esac
+
+    # Check if sndio was specified as a build option
+	if [ "$build_option_sndio" ]; then conf+=('use_sndio=true'); fi
+
+	out/Release/gn gen out/Release --args="${conf[*]}"
+    
+    # no real purpose other than to verify if build flags are set up
+    echo "-> listing gn args ..."
+    out/Release/gn args --list out/Release
+}
+do_build() {
+	if [ "$build_option_clang" ]; then
+		export CC=clang
+		export CXX=clang++
+	fi
+
+	ninja -C out/Release ${makejobs} chrome chromedriver chrome_sandbox
+}
+do_install() {
+	vinstall out/Release/chrome 755 usr/lib/${pkgname} ${pkgname}
+    vinstall out/Release/chrome_sandbox 755 usr/lib/${pkgname} chrome_sandbox
+	vinstall out/Release/chromedriver 755 usr/lib/${pkgname} chromedriver
+	vinstall out/Release/libEGL.so 755 usr/lib/${pkgname} libEGL.so
+	vinstall out/Release/libGLESv2.so 755 usr/lib/${pkgname} libGLESv2.so
+
+	vcopy "out/Release/*.bin" usr/lib/${pkgname}
+	vcopy "out/Release/*.pak" usr/lib/${pkgname}
+
+	vmkdir usr/lib/${pkgname}/locales
+	vcopy "out/Release/locales/*.pak" usr/lib/${pkgname}/locales
+
+	vmkdir usr/lib/${pkgname}/swiftshader
+	vcopy "out/Release/swiftshader/*.so" usr/lib/${pkgname}/swiftshader
+
+	vinstall ${FILESDIR}/chromium.desktop 644 usr/share/applications ${pkgname}.desktop
+
+	vinstall out/Release/icudtl.dat 0644 usr/lib/${pkgname}
+
+	for size in 24 48 64 128 256; do
+		vinstall "chrome/app/theme/chromium/product_logo_${size}.png" \
+			644 \
+			usr/share/icons/hicolor/${size}x${size}/apps ${pkgname}.png
+	done
+	for size in 16 32; do
+		vinstall "chrome/app/theme/default_100_percent/chromium/product_logo_${size}.png" \
+			644 \
+			usr/share/icons/hicolor/${size}x${size}/apps ${pkgname}.png
+	done
+
+	vbin ${FILESDIR}/chromium.sh ${pkgname}
+	vlicense LICENSE
+	ln -sf /usr/lib/${pkgname}/chromedriver ${DESTDIR}/usr/bin/chromedriver
+}
