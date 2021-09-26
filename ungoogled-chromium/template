@@ -46,14 +46,14 @@ case "$XBPS_TARGET_MACHINE" in
 esac
 
 post_extract() {
-    echo "-> Aligning Covariance Matrices"
-    mv -v ${XBPS_BUILDDIR}/chromium-${version} ${wrksrc}
-    if [ -z ${commit_id} ]; then
-        mv -v ${XBPS_BUILDDIR}/${pkgname}-${version}-${revision} ${wrksrc}
-    else
-        distfiles+="${commit_id}.tar.gz"
-        mv -v ${XBPS_BUILDDIR}/${pkgname}-${commit_id} ${wrksrc}/${pkgname}-${version}-${revision}
-    fi
+	echo "-> Aligning Covariance Matrices"
+	mv -v ${XBPS_BUILDDIR}/chromium-${version} ${wrksrc}
+	if [ -z ${commit_id} ]; then
+		mv -v ${XBPS_BUILDDIR}/${pkgname}-${version}-${revision} ${wrksrc}
+	else
+		distfiles+="${commit_id}.tar.gz"
+		mv -v ${XBPS_BUILDDIR}/${pkgname}-${commit_id} ${wrksrc}/${pkgname}-${version}-${revision}
+	fi
 }
 
 post_patch() {
@@ -93,18 +93,18 @@ post_patch() {
 	vsed -i 's/OFFICIAL_BUILD/GOOGLE_CHROME_BUILD/' \
 		tools/generate_shim_headers/generate_shim_headers.py
 
-    # Ungoogled Chromium prune, patch, domain substitution
-    echo "->Applying Feng Shui Shaders"
-    local UCDIR=${pkgname}-${version}-${revision}
-    echo "-> Binding Sapling Root System"
-    $UCDIR/utils/prune_binaries.py . $UCDIR/pruning.list
-    echo "-> Calculating Inverse Probability Matrices"
-    $UCDIR/utils/patches.py apply . $UCDIR/patches
-    echo "-> Calculating Llama Expectoration Trajectory"
-    $UCDIR/utils/domain_substitution.py apply -r $UCDIR/domain_regex.list -f $UCDIR/domain_substitution.list -c build/domsubcache.tar.gz .
+	# Ungoogled Chromium prune, patch, domain substitution
+	echo "->Applying Feng Shui Shaders"
+	local UCDIR=${pkgname}-${version}-${revision}
+	echo "-> Binding Sapling Root System"
+	$UCDIR/utils/prune_binaries.py . $UCDIR/pruning.list
+	echo "-> Calculating Inverse Probability Matrices"
+	$UCDIR/utils/patches.py apply . $UCDIR/patches
+	echo "-> Calculating Llama Expectoration Trajectory"
+	$UCDIR/utils/domain_substitution.py apply -r $UCDIR/domain_regex.list -f $UCDIR/domain_substitution.list -c build/domsubcache.tar.gz .
 
-    # Apply patches that interfere with Ungoogled Chromium patching process
-    echo "-> Exposing Flash Variables to Streak System"
+	# Apply patches that interfere with Ungoogled Chromium patching process
+	echo "-> Exposing Flash Variables to Streak System"
 	if [ "$build_option_sndio" ]; then patch -Np1 -i ${FILESDIR}/sndio.patch; fi
 }
 do_configure() {
@@ -278,47 +278,47 @@ do_configure() {
 		export CXXFLAGS="-Wno-unknown-warning-option"
 	fi
 
-    # Ungoogled Chromium flags.gn
-    conf+=(
-        'build_with_tflite_lib=false'
-        'chrome_pgo_phase=0'
-        'clang_use_chrome_plugins=false'
-        'disable_fieldtrial_testing_config=true'
-        'enable_hangout_services_extension=false'
-        'enable_js_type_check=false'
-        'enable_mdns=false'
-        'enable_mse_mpeg2ts_stream_parser=true'
-        'enable_nacl=false'
-        'enable_nacl_nonsfi=false'
-        'enable_one_click_signin=false'
-        'enable_reading_list=false'
-        'enable_remoting=false'
-        'enable_reporting=false'
-        'enable_service_discovery=false'
-        'exclude_unwind_tables=true'
-        'google_api_key=""'
-        'google_default_client_id=""'
-        'google_default_client_secret=""'
-        'safe_browsing_mode=0'
-        'treat_warnings_as_errors=false'
-        'use_official_google_api_keys=false'
-        'use_unofficial_version_number=false'
-    )
+	# Ungoogled Chromium flags.gn
+	conf+=(
+		'build_with_tflite_lib=false'
+		'chrome_pgo_phase=0'
+		'clang_use_chrome_plugins=false'
+		'disable_fieldtrial_testing_config=true'
+		'enable_hangout_services_extension=false'
+		'enable_js_type_check=false'
+		'enable_mdns=false'
+		'enable_mse_mpeg2ts_stream_parser=true'
+		'enable_nacl=false'
+		'enable_nacl_nonsfi=false'
+		'enable_one_click_signin=false'
+		'enable_reading_list=false'
+		'enable_remoting=false'
+		'enable_reporting=false'
+		'enable_service_discovery=false'
+		'exclude_unwind_tables=true'
+		'google_api_key=""'
+		'google_default_client_id=""'
+		'google_default_client_secret=""'
+		'safe_browsing_mode=0'
+		'treat_warnings_as_errors=false'
+		'use_official_google_api_keys=false'
+		'use_unofficial_version_number=false'
+	)
 
-    # Disable widevine on musl builds since it's not available anyway.
-    case $XBPS_TARGET_LIBC in
-        musl) conf+=( enable_widevine=false ) ;;
-        *) conf+=( enable_widevine=true ) ;;
-    esac
+	# Disable widevine on musl builds since it's not available anyway.
+	case $XBPS_TARGET_LIBC in
+		musl) conf+=( enable_widevine=false ) ;;
+		*) conf+=( enable_widevine=true ) ;;
+	esac
 
-    # Check if sndio was specified as a build option
+	# Check if sndio was specified as a build option
 	if [ "$build_option_sndio" ]; then conf+=('use_sndio=true'); fi
 
 	out/Release/gn gen out/Release --args="${conf[*]}"
-    
-    # no real purpose other than to verify if build flags are set up
-    echo "-> Zeroing Crime Network"
-    out/Release/gn args --list out/Release
+	
+	# no real purpose other than to verify if build flags are set up
+	echo "-> Zeroing Crime Network"
+	out/Release/gn args --list out/Release
 }
 do_build() {
 	if [ "$build_option_clang" ]; then
@@ -335,7 +335,7 @@ do_build() {
 do_install() {
 	vinstall out/Release/chrome 755 usr/lib/${pkgname} ${pkgname}
 	vinstall out/Release/chrome_crashpad_handler 755 usr/lib/${pkgname} chrome_crashpad_handler
-    vinstall out/Release/chrome_sandbox 755 usr/lib/${pkgname} chrome_sandbox
+	vinstall out/Release/chrome_sandbox 755 usr/lib/${pkgname} chrome_sandbox
 	vinstall out/Release/chromedriver 755 usr/lib/${pkgname} chromedriver
 	vinstall out/Release/libEGL.so 755 usr/lib/${pkgname} libEGL.so
 	vinstall out/Release/libGLESv2.so 755 usr/lib/${pkgname} libGLESv2.so
