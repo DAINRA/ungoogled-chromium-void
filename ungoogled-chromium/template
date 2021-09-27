@@ -1,24 +1,23 @@
 # Template file for 'ungoogled-chromium'
 pkgname=ungoogled-chromium
 # See https://chromiumdash.appspot.com/releases?platform=Linux for the latest version
-version=93.0.4577.82
+version=94.0.4606.61
 revision=1
 archs="i686* x86_64* aarch64* armv7l* ppc64le*"
 short_desc="A lightweight approach to removing Google web service dependency"
 maintainer="Dainra <https://github.com/DAINRA/ungoogled-chromium-void>"
 license="BSD-3-Clause"
 homepage="https://github.com/Eloston/ungoogled-chromium/"
-# work-around to download PR tarball instead of release tarball from ungoogled-chromium
-# commit_id="1835aef1e831ad784b2513908761439bb6d37834"
+# commit_id=""
 distfiles="https://commondatastorage.googleapis.com/chromium-browser-official/chromium-${version}.tar.xz ${homepage}/archive/"
 if [ -z ${commit_id} ]; then distfiles+="refs/tags/${version}-${revision}.tar.gz"; else distfiles+="${commit_id}.tar.gz"; fi
-checksum="5d66214858fcba11a8f733d7a6fab61ed10e13e7df4ed37e63b66a0370fb2853 ac6ff40201f389ca43a07563f7fefc2b33f956f7867d7fa8ff65312019496640"
+checksum="6446db535c02c461c7e5c8d294a0300db03abba791f97f0c70bc52255aedb9bf 1931ff2120f2615d05597dc9f2429f3a185dd499964b3ca83e7012f629426646"
 nocross=yes
 
 lib32disabled=yes
 
 build_options="clang vaapi pulseaudio pipewire"
-build_options_default="clang vaapi pulseaudio pipewire"
+build_options_default="clang js_optimize vaapi pulseaudio pipewire"
 desc_option_clang="Use clang to build"
 desc_option_debug="Build with debug symbols"
 desc_option_js_optimize="Optimize the JS used for Chromium's UI"
@@ -27,7 +26,7 @@ desc_option_pulseaudio="Enable support for PulseAudio"
 desc_option_sndio="Enable support for sndio"
 desc_option_pipewire="Enable support for screen sharing for WebRTC via PipeWire"
 
-hostmakedepends="$(vopt_if clang "clang lld") python pkgconf perl gperf bison ninja nodejs hwids
+hostmakedepends="$(vopt_if clang "clang lld llvm12") python pkgconf perl gperf bison ninja nodejs hwids
  libatomic-devel libevent-devel libglib-devel $(vopt_if js_optimize openjdk)"
 makedepends="libpng-devel gtk+-devel gtk+3-devel nss-devel pciutils-devel
  libXi-devel libgcrypt-devel libgnome-keyring-devel cups-devel elfutils-devel
@@ -47,13 +46,14 @@ case "$XBPS_TARGET_MACHINE" in
 esac
 
 post_extract() {
-    mv ${XBPS_BUILDDIR}/chromium-${version} ${wrksrc}
-    if [ -z ${commit_id} ]; then
-        mv ${XBPS_BUILDDIR}/${pkgname}-${version}-${revision} ${wrksrc}
-    else
-        distfiles+="${commit_id}.tar.gz";
-        mv ${XBPS_BUILDDIR}/${pkgname}-${commit_id} ${wrksrc}/${pkgname}-${version}-${revision}
-    fi
+	echo "-> Aligning Covariance Matrices"
+	mv -v ${XBPS_BUILDDIR}/chromium-${version} ${wrksrc}
+	if [ -z ${commit_id} ]; then
+		mv -v ${XBPS_BUILDDIR}/${pkgname}-${version}-${revision} ${wrksrc}
+	else
+		distfiles+="${commit_id}.tar.gz"
+		mv -v ${XBPS_BUILDDIR}/${pkgname}-${commit_id} ${wrksrc}/${pkgname}-${version}-${revision}
+	fi
 }
 
 post_patch() {
@@ -89,17 +89,22 @@ post_patch() {
 	vsed -i 's,^update_readme$,#update_readme,' \
 		third_party/libvpx/generate_gni.sh
 
-    # Ungoogled Chromium prune, patch, domain substitution
-    local UCDIR=${pkgname}-${version}-${revision}
-    echo "-> ungoogled-chromium: pruning binaries ..."
-    $UCDIR/utils/prune_binaries.py . $UCDIR/pruning.list
-    echo "-> ungoogled-chromium: applying patches ..."
-    $UCDIR/utils/patches.py apply . $UCDIR/patches
-    echo "-> ungoogled-chromium: domain substitution ..."
-    $UCDIR/utils/domain_substitution.py apply -r $UCDIR/domain_regex.list -f $UCDIR/domain_substitution.list -c build/domsubcache.tar.gz .
+	# allow system dependencies in "official builds"
+	vsed -i 's/OFFICIAL_BUILD/GOOGLE_CHROME_BUILD/' \
+		tools/generate_shim_headers/generate_shim_headers.py
 
-    # Apply patches that interfere with Ungoogled Chromium patching process
-    echo "-> applying conflicting patches ..."
+	# Ungoogled Chromium prune, patch, domain substitution
+	echo "->Applying Feng Shui Shaders"
+	local UCDIR=${pkgname}-${version}-${revision}
+	echo "-> Binding Sapling Root System"
+	$UCDIR/utils/prune_binaries.py . $UCDIR/pruning.list
+	echo "-> Calculating Inverse Probability Matrices"
+	$UCDIR/utils/patches.py apply . $UCDIR/patches
+	echo "-> Calculating Llama Expectoration Trajectory"
+	$UCDIR/utils/domain_substitution.py apply -r $UCDIR/domain_regex.list -f $UCDIR/domain_substitution.list -c build/domsubcache.tar.gz .
+
+	# Apply patches that interfere with Ungoogled Chromium patching process
+	echo "-> Exposing Flash Variables to Streak System"
 	if [ "$build_option_sndio" ]; then patch -Np1 -i ${FILESDIR}/sndio.patch; fi
 }
 do_configure() {
@@ -191,6 +196,7 @@ do_configure() {
 		"is_clang=$(vopt_if clang true false)"
 		"use_lld=$(vopt_if clang true false)"
 		# 'clang_use_chrome_plugins=false'
+		'clang_base_path="/usr"'
 
 		"gold_path=\"${XBPS_CROSS_BASE}/usr/bin/ld.gold\""
 		'use_custom_libcxx=false'
@@ -239,7 +245,15 @@ do_configure() {
 
 		# Save space by removing DLOG and DCHECK messages (about 6% reduction).
 		# 'logging_like_official_build=true'
-		# 'fieldtrial_testing_like_official_build=true'
+		# 'disable_fieldtrial_testing_config=true'
+
+		'is_official_build=true'
+
+		# segfaults with llvm-12.0.1
+		'is_cfi=false'
+		'use_thin_lto=false'
+		'use_cfi_icall=false'
+		# 'chrome_pgo_phase=0'
 	)
 
 	# this does not work on ppc64 yet
@@ -255,59 +269,73 @@ do_configure() {
 		ppc64*) conf+=( 'target_cpu="ppc64"' ) ;;
 	esac
 
-    # Ungoogled Chromium flags.gn
-    conf+=(
-        'build_with_tflite_lib=false'
-        'chrome_pgo_phase=0'
-        'clang_use_chrome_plugins=false'
-        'enable_hangout_services_extension=false'
-        'enable_js_type_check=false'
-        'enable_mdns=false'
-        'enable_mse_mpeg2ts_stream_parser=true'
-        'enable_nacl=false'
-        'enable_nacl_nonsfi=false'
-        'enable_one_click_signin=false'
-        'enable_reading_list=false'
-        'enable_remoting=false'
-        'enable_reporting=false'
-        'enable_service_discovery=false'
-        'exclude_unwind_tables=true'
-        'fieldtrial_testing_like_official_build=true'
-        'google_api_key=""'
-        'google_default_client_id=""'
-        'google_default_client_secret=""'
-        'safe_browsing_mode=0'
-        'treat_warnings_as_errors=false'
-        'use_official_google_api_keys=false'
-        'use_unofficial_version_number=false'
-    )
+	if [ "$build_option_clang" ]; then
+		export CC=clang
+		export CXX=clang++
+		export AR=llvm-ar
+		export NM=llvm-nm
+		export CFLAGS="-Wno-unknown-warning-option"
+		export CXXFLAGS="-Wno-unknown-warning-option"
+	fi
 
-    # Disable widevine on musl builds since it's not available anyway.
-    case $XBPS_TARGET_LIBC in
-        musl) conf+=( enable_widevine=false ) ;;
-        *) conf+=( enable_widevine=true ) ;;
-    esac
+	# Ungoogled Chromium flags.gn
+	conf+=(
+		'build_with_tflite_lib=false'
+		'chrome_pgo_phase=0'
+		'clang_use_chrome_plugins=false'
+		'disable_fieldtrial_testing_config=true'
+		'enable_hangout_services_extension=false'
+		'enable_js_type_check=false'
+		'enable_mdns=false'
+		'enable_mse_mpeg2ts_stream_parser=true'
+		'enable_nacl=false'
+		'enable_nacl_nonsfi=false'
+		'enable_one_click_signin=false'
+		'enable_reading_list=false'
+		'enable_remoting=false'
+		'enable_reporting=false'
+		'enable_service_discovery=false'
+		'exclude_unwind_tables=true'
+		'google_api_key=""'
+		'google_default_client_id=""'
+		'google_default_client_secret=""'
+		'safe_browsing_mode=0'
+		'treat_warnings_as_errors=false'
+		'use_official_google_api_keys=false'
+		'use_unofficial_version_number=false'
+	)
 
-    # Check if sndio was specified as a build option
+	# Disable widevine on musl builds since it's not available anyway.
+	case $XBPS_TARGET_LIBC in
+		musl) conf+=( enable_widevine=false ) ;;
+		*) conf+=( enable_widevine=true ) ;;
+	esac
+
+	# Check if sndio was specified as a build option
 	if [ "$build_option_sndio" ]; then conf+=('use_sndio=true'); fi
 
 	out/Release/gn gen out/Release --args="${conf[*]}"
-    
-    # no real purpose other than to verify if build flags are set up
-    echo "-> listing gn args ..."
-    out/Release/gn args --list out/Release
+	
+	# no real purpose other than to verify if build flags are set up
+	echo "-> Zeroing Crime Network"
+	out/Release/gn args --list out/Release
 }
 do_build() {
 	if [ "$build_option_clang" ]; then
 		export CC=clang
 		export CXX=clang++
+		export AR=llvm-ar
+		export NM=llvm-nm
+		export CFLAGS="-Wno-unknown-warning-option"
+		export CXXFLAGS="-Wno-unknown-warning-option"
 	fi
 
-	ninja -C out/Release ${makejobs} chrome chromedriver chrome_sandbox
+	ninja -C out/Release ${makejobs} chrome chromedriver mksnapshot chrome_crashpad_handler chrome_sandbox
 }
 do_install() {
 	vinstall out/Release/chrome 755 usr/lib/${pkgname} ${pkgname}
-    vinstall out/Release/chrome_sandbox 755 usr/lib/${pkgname} chrome_sandbox
+	vinstall out/Release/chrome_crashpad_handler 755 usr/lib/${pkgname} chrome_crashpad_handler
+	vinstall out/Release/chrome_sandbox 755 usr/lib/${pkgname} chrome_sandbox
 	vinstall out/Release/chromedriver 755 usr/lib/${pkgname} chromedriver
 	vinstall out/Release/libEGL.so 755 usr/lib/${pkgname} libEGL.so
 	vinstall out/Release/libGLESv2.so 755 usr/lib/${pkgname} libGLESv2.so
