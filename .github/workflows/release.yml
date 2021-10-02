@@ -2,135 +2,135 @@ name: "Build release"
 
 on:
   push:
-	branches:
-	  - master
+    branches:
+      - master
 
 jobs:
   prepare:
-	name: "Prepare build environment"
-	runs-on: self-hosted
-	steps:
-	  - name: "Checkout source code"
-		uses: actions/checkout@v2
-		with:
-		  fetch-depth: 0
-	  - name: "Setup void-packages"
-		run: |
-		  git clone --depth 1 git://github.com/void-linux/void-packages.git
-		  cd void-packages
-		  cat << EOF > etc/conf
-		  XBPS_CCACHE=yes
-		  XBPS_MAKEJOBS=4
-		  EOF
-		  find etc/xbps.d -type f -name 'repos-remote*.conf' -exec sed -i 's,alpha.de.repo.voidlinux.org,mirrors.dotsrc.org/voidlinux,g' {} \;
-		  ./xbps-src binary-bootstrap
-		  ./xbps-src -m masterdir-musl binary-bootstrap x86_64-musl
-	  - name: "Copy ungoogled-chromium template"
-		run: |
-		  cp -r ./ungoogled-chromium ./void-packages/srcpkgs
-
+    name: "Prepare build environment"
+    runs-on: self-hosted
+    steps:
+      - name: "Checkout source code"
+        uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+      - name: "Setup void-packages"
+        run: |
+          git clone --depth 1 git://github.com/void-linux/void-packages.git
+          cd void-packages
+          cat << EOF > etc/conf
+          XBPS_CCACHE=yes
+          XBPS_MAKEJOBS=4
+          EOF
+          find etc/xbps.d -type f -name 'repos-remote*.conf' -exec sed -i 's,alpha.de.repo.voidlinux.org,mirrors.dotsrc.org/voidlinux,g' {} \;
+          ./xbps-src binary-bootstrap
+          ./xbps-src -m masterdir-musl binary-bootstrap x86_64-musl
+      - name: "Copy ungoogled-chromium template to srcpkgs"
+        run: |
+          cp -r ./ungoogled-chromium ./void-packages/srcpkgs
+  
   setup_ccache:
-	name: "Setup local cache"
-	runs-on: self-hosted
-	needs: [prepare]
-	steps:
-	  - name: "Move cache to hostdir"
-		run: |
-		  cd void-packages
-		  mv ~/.local/ccache hostdir
+    name: "Setup local cache"
+    runs-on: self-hosted
+    needs: [prepare]
+    steps:
+      - name: "Move cache to hostdir"
+        run: |
+          cd void-packages
+          mv ~/.local/ccache hostdir
 
   build_x86_64:
-	name: "Build x86_64 package"
-	runs-on: self-hosted
-	needs: [prepare, setup_ccache]
-	steps:
-	  - name: "Build"
-		run: |
-		  cd void-packages
-		  ./xbps-src pkg ungoogled-chromium | tee log-x86_64
-		  sha256sum ./hostdir/binpkgs/ungoogled-chromium-*.x86_64.xbps
+    name: "Build x86_64 package"
+    runs-on: self-hosted
+    needs: [prepare, setup_ccache]
+    steps:
+      - name: "Build"
+        run: |
+          cd void-packages
+          ./xbps-src pkg ungoogled-chromium | tee log.x86_64
+          sha256sum ./hostdir/binpkgs/ungoogled-chromium-*.x86_64.xbps         
 
   build_x86_64-musl:
-	name: "Build x86_64-musl package"
-	runs-on: self-hosted
-	needs: [prepare, setup_ccache, build_x86_64]
-	steps:
-	  - name: "Build"
-		run: |
-		  cd void-packages
-		  ./xbps-src -m masterdir-musl pkg ungoogled-chromium | tee log-x86_64-musl
-		  sha256sum ./hostdir/binpkgs/ungoogled-chromium-*.x86_64-musl.xbps
-
+    name: "Build x86_64-musl package"
+    runs-on: self-hosted
+    needs: [prepare, setup_ccache, build_x86_64]
+    steps:
+      - name: "Build"
+        run: |
+          cd void-packages
+          ./xbps-src -m masterdir-musl pkg ungoogled-chromium | tee log.x86_64-musl
+          sha256sum ./hostdir/binpkgs/ungoogled-chromium-*.x86_64-musl.xbps
+          
   backup_ccache:
-	name: "Backup cache to local"
-	runs-on: self-hosted
-	needs: [setup_ccache, build_x86_64, build_x86_64-musl]
-	if: always()
-	steps:
-	  - name: "Move cache to backup"
-		run: |
-		  mv void-packages/hostdir/ccache ~/.local
+    name: "Backup cache to local"
+    runs-on: self-hosted
+    needs: [setup_ccache, build_x86_64, build_x86_64-musl]
+    if: always()
+    steps:
+      - name: "Move cache to backup"
+        run: |
+          mv void-packages/hostdir/ccache ~/.local
 
   create_release:
-	name: "Create release & publish packages"
-	runs-on: self-hosted
-	needs: [build_x86_64, build_x86_64-musl]
-	steps:
-	  - name: "Generate version string"
-		id: version
-		run: |
-		  echo "::set-output name=version::$(basename void-packages/hostdir/binpkgs/ungoogled-chromium*.x86_64.xbps | sed 's/.*-\([0-9\.][0-9\.]*_[0-9]*\).*/\1/')"
-	  - name: "Rename & backup log files"
-		run: |
-		  cd void-packages
-		  mv log-x86_64 ~/.local/log/log.ungoogled-chromium-${{ steps.version.outputs.version }}.x86_64
-		  mv log-x86_64-musl ~/.local/log/log.ungoogled-chromium-${{ steps.version.outputs.version }}.x86_64-musl
-	  - name: "Generate package checksum"
-		id: checksum
-		run: |
-		  cd void-packages/hostdir/binpkgs
-		  echo "::set-output name=x86_64::$(sha256sum ungoogled-chromium-${{ steps.version.outputs.version }}.x86_64.xbps)"
-		  echo "::set-output name=x86_64-musl::$(sha256sum ungoogled-chromium-${{ steps.version.outputs.version }}.x86_64-musl.xbps)"
-	  - name: "Create Release"
-		uses: actions/create-release@v1
-		id: create_release
-		with:
-		  draft: false
-		  prerelease: false
-		  release_name: Release v${{ steps.version.outputs.version }}
-		  tag_name: v${{ steps.version.outputs.version }}
-		  body: |
-			**Sha256 checksums**
-			```
-			${{ steps.checksum.outputs.x86_64 }}
-			${{ steps.checksum.outputs.x86_64-musl }}
-			```
-		env:
-		  GITHUB_TOKEN: ${{ github.token }}
-	  - name: "Upload x86_64 package"
-		uses: actions/upload-release-asset@v1
-		env:
-		  GITHUB_TOKEN: ${{ github.token }}
-		with:
-		  upload_url: ${{ steps.create_release.outputs.upload_url }}
-		  asset_path: ./void-packages/hostdir/binpkgs/ungoogled-chromium-${{ steps.version.outputs.version }}.x86_64.xbps
-		  asset_name: ungoogled-chromium-${{ steps.version.outputs.version }}.x86_64.xbps
-		  asset_content_type: application/zstd
-	  - name: "Upload x86_64-musl package"
-		uses: actions/upload-release-asset@v1
-		env:
-		  GITHUB_TOKEN: ${{ github.token }}
-		with:
-		  upload_url: ${{ steps.create_release.outputs.upload_url }}
-		  asset_path: ./void-packages/hostdir/binpkgs/ungoogled-chromium-${{ steps.version.outputs.version }}.x86_64-musl.xbps
-		  asset_name: ungoogled-chromium-${{ steps.version.outputs.version }}.x86_64-musl.xbps
-		  asset_content_type: application/zstd
+    name: "Create release & publish packages"
+    runs-on: self-hosted
+    needs: [build_x86_64, build_x86_64-musl]
+    steps:
+      - name: "Generate version string"
+        id: version
+        run: |
+          echo "::set-output name=version::$(basename void-packages/hostdir/binpkgs/ungoogled-chromium*.x86_64.xbps | sed 's/.*-\([0-9\.][0-9\.]*_[0-9]*\).*/\1/')"
+      - name: "Rename & backup log files"
+        run: |
+          cd void-packages
+          mv log.x86_64 ~/.local/log/log.ungoogled-chromium-${{ steps.version.outputs.version }}.x86_64
+          mv log.x86_64-musl ~/.local/log/log.ungoogled-chromium-${{ steps.version.outputs.version }}.x86_64-musl
+      - name: "Generate package checksum"
+        id: checksum
+        run: |
+          cd void-packages/hostdir/binpkgs
+          echo "::set-output name=x86_64::$(sha256sum ungoogled-chromium-${{ steps.version.outputs.version }}.x86_64.xbps)"
+          echo "::set-output name=x86_64-musl::$(sha256sum ungoogled-chromium-${{ steps.version.outputs.version }}.x86_64-musl.xbps)"
+      - name: "Create Release"
+        uses: actions/create-release@v1
+        id: create_release
+        with:
+          draft: false
+          prerelease: false
+          release_name: Release v${{ steps.version.outputs.version }}
+          tag_name: v${{ steps.version.outputs.version }}
+          body: |
+            **Sha256 checksums**
+            ```
+            ${{ steps.checksum.outputs.x86_64 }}
+            ${{ steps.checksum.outputs.x86_64-musl }}
+            ```
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+      - name: "Upload x86_64 package"
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ./void-packages/hostdir/binpkgs/ungoogled-chromium-${{ steps.version.outputs.version }}.x86_64.xbps
+          asset_name: ungoogled-chromium-${{ steps.version.outputs.version }}.x86_64.xbps
+          asset_content_type: application/zstd
+      - name: "Upload x86_64-musl package"
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ./void-packages/hostdir/binpkgs/ungoogled-chromium-${{ steps.version.outputs.version }}.x86_64-musl.xbps
+          asset_name: ungoogled-chromium-${{ steps.version.outputs.version }}.x86_64-musl.xbps
+          asset_content_type: application/zstd
 
   cleanup:
-	name: "Cleanup"
-	runs-on: self-hosted
-	needs: [prepare, backup_ccache, create_release]
-	steps:
-	  - name: "Remove residual files"
-		run: |
-		  rm -rf ./* .git .github
+    name: "Cleanup"
+    runs-on: self-hosted
+    needs: [prepare, backup_ccache, create_release]
+    steps:
+      - name: "Remove residual files"
+        run: |
+          rm -rf ./* .git .github
