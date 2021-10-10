@@ -26,9 +26,9 @@ jobs:
 
       - name: Configure void-packages
         run: |
-          cp -rv master/etc/* void-packages/etc
-          rm -rv void-packages/srcpkgs/ungoogled-chromium
-          cp -rv master/ungoogled-chromium void-packages/srcpkgs
+          cp -r master/etc/* void-packages/etc
+          rm -r void-packages/srcpkgs/ungoogled-chromium
+          cp -r master/ungoogled-chromium void-packages/srcpkgs
           cd void-packages
           git reset --hard e7ca6798247fb7a2d6373dbc48697041df4ebd67
   
