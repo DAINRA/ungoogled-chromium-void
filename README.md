@@ -41,12 +41,8 @@ Clone this repository or download the source archive from the [Releases](//githu
 
 ### Important note
 
-- Releases tagged with **`vx.x.x.x-x`** and the title **`Release vx.x.x.x-x`** are always based on official [void-packages](//github.com/void-linux/void-packages/tree/master/srcpkgs/chromium) template and [ungoogled-chromium](//github.com/Eloston/ungoogled-chromium/releases) release.
-- Releases tagged with **`pre-vx.x.x.x-x`** and the title **`Pre-Release vx.x.x.x-x`** are based on PR from void-packages **and/or** ungoogled-chromium.  
-    Unless there are major changes when the PR's are merged into the releases, these get promoted to the release version, otherwise the release version is rebuild.
-- Releases tagged with **`testing-vx.x.x.x-x`** and the title **`Testing-Release vx.x.x.x-x`** are personal builds based on either void-packages **or** ungoogled-chromium.  
-    As the name suggests, you should probably avoid these since they are just my tests for getting a version to build and might have missing patches and security fixes. Feel free to test them if you want to provide feedback.  
-    Good enough for generating an initial ccache, opening a video on youtube and checking out the Print preview page 😃.
+- Releases tagged **`Release`** are always based on official [void-packages](//github.com/void-linux/void-packages/tree/master/srcpkgs/chromium) template and [ungoogled-chromium](//github.com/Eloston/ungoogled-chromium/releases) release.
+- Releases tagged with **`Testing`** (or **`Pre-release`**) are personal builds based on either void-packages **or** ungoogled-chromium. For example if the void template is on an older version, but the latest version builds without extra patches and all that is needed is a version bump. *If you use this version just be aware that some patches might be missing, I only test if the browser works and there are no obvious errors*.
 
 ### Build Notes
 
