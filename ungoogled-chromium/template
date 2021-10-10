@@ -1,17 +1,16 @@
 # Template file for 'ungoogled-chromium'
 pkgname=ungoogled-chromium
 # See https://chromiumdash.appspot.com/releases?platform=Linux for the latest version
-version=94.0.4606.61
+version=94.0.4606.81
 revision=1
 archs="i686* x86_64* aarch64* armv7l* ppc64le*"
-short_desc="A lightweight approach to removing Google web service dependency"
-maintainer="Dainra <https://github.com/DAINRA/ungoogled-chromium-void>"
+short_desc="Google Chromium, sans integration with Google"
+maintainer="Dainra <an.costea.2015@gmail.com>"
 license="BSD-3-Clause"
 homepage="https://github.com/Eloston/ungoogled-chromium/"
-# commit_id=""
-distfiles="https://commondatastorage.googleapis.com/chromium-browser-official/chromium-${version}.tar.xz ${homepage}/archive/"
-if [ -z ${commit_id} ]; then distfiles+="refs/tags/${version}-${revision}.tar.gz"; else distfiles+="${commit_id}.tar.gz"; fi
-checksum="6446db535c02c461c7e5c8d294a0300db03abba791f97f0c70bc52255aedb9bf 1931ff2120f2615d05597dc9f2429f3a185dd499964b3ca83e7012f629426646"
+distfiles="https://commondatastorage.googleapis.com/chromium-browser-official/chromium-${version}.tar.xz ${homepage}/archive/refs/tags/${version}-${revision}.tar.gz"
+checksum="7071aa2b2caf48094c2ae816395948b4daec940606f4982ad5bbf68e5d2de598
+ dfb162c8824f98095bc5fa8928d44bcb5fb66a19873a5976b8059abe20cad6fe"
 nocross=yes
 
 lib32disabled=yes
@@ -48,12 +47,7 @@ esac
 post_extract() {
 	echo "-> Aligning Covariance Matrices"
 	mv -v ${XBPS_BUILDDIR}/chromium-${version} ${wrksrc}
-	if [ -z ${commit_id} ]; then
-		mv -v ${XBPS_BUILDDIR}/${pkgname}-${version}-${revision} ${wrksrc}
-	else
-		distfiles+="${commit_id}.tar.gz"
-		mv -v ${XBPS_BUILDDIR}/${pkgname}-${commit_id} ${wrksrc}/${pkgname}-${version}-${revision}
-	fi
+	mv -v ${XBPS_BUILDDIR}/${pkgname}-${version}-${revision} ${wrksrc}
 }
 
 post_patch() {
@@ -314,8 +308,11 @@ do_configure() {
 	# Check if sndio was specified as a build option
 	if [ "$build_option_sndio" ]; then conf+=('use_sndio=true'); fi
 
+	# Zero the ccache statistics
+	ccache -z
+
 	out/Release/gn gen out/Release --args="${conf[*]}"
-	
+
 	# no real purpose other than to verify if build flags are set up
 	echo "-> Zeroing Crime Network"
 	out/Release/gn args --list out/Release
@@ -331,6 +328,9 @@ do_build() {
 	fi
 
 	ninja -C out/Release ${makejobs} chrome chromedriver mksnapshot chrome_crashpad_handler chrome_sandbox
+
+	# Print ccache statistics
+	ccache -s
 }
 do_install() {
 	vinstall out/Release/chrome 755 usr/lib/${pkgname} ${pkgname}
