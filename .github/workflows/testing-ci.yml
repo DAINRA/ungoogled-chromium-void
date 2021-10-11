@@ -54,6 +54,7 @@ jobs:
     name: Build x86_64
     runs-on: [ self-hosted ]
     needs: [ setup ]
+    timeout-minutes: 1440
     outputs:
       filename: ${{ steps.build.outputs.filename }}
       hash: ${{ steps.build.outputs.hash }}
@@ -73,6 +74,7 @@ jobs:
     name: Build x86_64-musl
     runs-on: [ self-hosted ]
     needs: [ setup, build-x86_64 ]
+    timeout-minutes: 1440
     outputs:
       filename: ${{ steps.build.outputs.filename }}
       hash: ${{ steps.build.outputs.hash }}
