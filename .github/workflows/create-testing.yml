@@ -24,6 +24,7 @@ jobs:
         uses: actions/checkout@v2
         with:
           repository: void-linux/void-packages
+          ref: e7ca6798247fb7a2d6373dbc48697041df4ebd67
           path: void-packages
 
       - name: Configure void-packages
