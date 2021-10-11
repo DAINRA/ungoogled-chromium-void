@@ -1,4 +1,4 @@
-ame: Create new release
+name: Create new release
 concurrency: kongou
 
 on:
