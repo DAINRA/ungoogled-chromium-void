@@ -51,6 +51,7 @@ jobs:
   build-x86_64:
     name: Build x86_64
     runs-on: [ self-hosted ]
+    timeout-minutes: 1440
     needs: [ setup ]
     outputs:
       filename: ${{ steps.build.outputs.filename }}
@@ -70,6 +71,7 @@ jobs:
   build-x86_64-musl:
     name: Build x86_64-musl
     runs-on: [ self-hosted ]
+    timeout-minutes: 1440
     needs: [ setup, build-x86_64 ]
     outputs:
       filename: ${{ steps.build.outputs.filename }}
