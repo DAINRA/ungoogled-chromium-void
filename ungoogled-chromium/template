@@ -1,20 +1,21 @@
-# Template file for 'chromium'
-pkgname=chromium
+# Template file for 'ungoogled-chromium'
+pkgname=ungoogled-chromium
 # See https://chromiumdash.appspot.com/releases?platform=Linux for the latest version
 version=94.0.4606.81
 revision=1
 archs="i686* x86_64* aarch64* armv7l* ppc64le*"
-short_desc="Google's attempt at creating a safer, faster, and more stable browser"
-maintainer="Enno Boland <gottox@voidlinux.org>"
+short_desc="Google Chromium, sans integration with Google"
+maintainer="Dainra <an.costea.2015@gmail.com>"
 license="BSD-3-Clause"
-homepage="https://www.chromium.org/"
-distfiles="https://commondatastorage.googleapis.com/chromium-browser-official/${pkgname}-${version}.tar.xz"
-checksum=7071aa2b2caf48094c2ae816395948b4daec940606f4982ad5bbf68e5d2de598
+homepage="https://github.com/Eloston/ungoogled-chromium/"
+distfiles="https://commondatastorage.googleapis.com/chromium-browser-official/chromium-${version}.tar.xz ${homepage}/archive/refs/tags/${version}-${revision}.tar.gz"
+checksum="7071aa2b2caf48094c2ae816395948b4daec940606f4982ad5bbf68e5d2de598
+ dfb162c8824f98095bc5fa8928d44bcb5fb66a19873a5976b8059abe20cad6fe"
 nocross=yes
 
 lib32disabled=yes
 
-build_options="clang debug js_optimize vaapi pulseaudio sndio pipewire"
+build_options="clang vaapi pulseaudio pipewire"
 build_options_default="clang js_optimize vaapi pulseaudio pipewire"
 desc_option_clang="Use clang to build"
 desc_option_debug="Build with debug symbols"
@@ -42,6 +43,12 @@ depends="libexif hwids desktop-file-utils hicolor-icon-theme xdg-utils"
 case "$XBPS_TARGET_MACHINE" in
 	ppc64*-musl) makedepends+=" libucontext-devel" ;;
 esac
+
+post_extract() {
+	echo "-> Aligning Covariance Matrices"
+	mv -v ${XBPS_BUILDDIR}/chromium-${version} ${wrksrc}
+	mv -v ${XBPS_BUILDDIR}/${pkgname}-${version}-${revision} ${wrksrc}
+}
 
 post_patch() {
 	if [ "$XBPS_TARGET_LIBC" = "musl" ]; then
@@ -79,6 +86,20 @@ post_patch() {
 	# allow system dependencies in "official builds"
 	vsed -i 's/OFFICIAL_BUILD/GOOGLE_CHROME_BUILD/' \
 		tools/generate_shim_headers/generate_shim_headers.py
+
+	# Ungoogled Chromium prune, patch, domain substitution
+	echo "->Applying Feng Shui Shaders"
+	local UCDIR=${pkgname}-${version}-${revision}
+	echo "-> Binding Sapling Root System"
+	$UCDIR/utils/prune_binaries.py . $UCDIR/pruning.list
+	echo "-> Calculating Inverse Probability Matrices"
+	$UCDIR/utils/patches.py apply . $UCDIR/patches
+	echo "-> Calculating Llama Expectoration Trajectory"
+	$UCDIR/utils/domain_substitution.py apply -r $UCDIR/domain_regex.list -f $UCDIR/domain_substitution.list -c build/domsubcache.tar.gz .
+
+	# Apply patches that interfere with Ungoogled Chromium patching process
+	echo "-> Exposing Flash Variables to Streak System"
+	if [ "$build_option_sndio" ]; then patch -Np1 -i ${FILESDIR}/sndio.patch; fi
 }
 do_configure() {
 	local system="" conf=()
@@ -159,8 +180,8 @@ do_configure() {
 	third_party/libaddressinput/chromium/tools/update-strings.py
 
 	conf=(
-		'enable_nacl=false'
-		'enable_nacl_nonsfi=false'
+		# 'enable_nacl=false'
+		# 'enable_nacl_nonsfi=false'
 
 		'use_sysroot=false'
 		'custom_toolchain="//build/toolchain/linux/unbundle:default"'
@@ -168,7 +189,7 @@ do_configure() {
 
 		"is_clang=$(vopt_if clang true false)"
 		"use_lld=$(vopt_if clang true false)"
-		'clang_use_chrome_plugins=false'
+		# 'clang_use_chrome_plugins=false'
 		'clang_base_path="/usr"'
 
 		"gold_path=\"${XBPS_CROSS_BASE}/usr/bin/ld.gold\""
@@ -186,8 +207,8 @@ do_configure() {
 		'use_allocator="none"'
 		'use_allocator_shim=false'
 
-		'enable_widevine=true'
-		'enable_hangout_services_extension=true'
+		# 'enable_widevine=true'
+		# 'enable_hangout_services_extension=true'
 
 		'use_system_harfbuzz=true'
 
@@ -196,14 +217,14 @@ do_configure() {
 		"use_vaapi=$(vopt_if vaapi true false)"
 
 		# https://chromium.googlesource.com/chromium/src/+/master/docs/closure_compilation.md
-		"enable_js_type_check=$(vopt_if js_optimize true false)"
+		# "enable_js_type_check=$(vopt_if js_optimize true false)"
 
 		"use_pulseaudio=$(vopt_if pulseaudio true false)"
 		"link_pulseaudio=$(vopt_if pulseaudio true false)"
 
 		"rtc_use_pipewire=$(vopt_if pipewire true false)"
 
-		"use_sndio=$(vopt_if sndio true false)"
+		# "use_sndio=$(vopt_if sndio true false)"
 
 		# Always support proprietary codecs.
 		# Enable H.264 support in bundled ffmpeg.
@@ -213,12 +234,12 @@ do_configure() {
 		# Make sure that -Werror doesn't get added to CFLAGS by the build system.
 		# Depending on GCC version the warnings are different and we don't want
 		# the build to fail because of that.
-		'treat_warnings_as_errors=false'
+		# 'treat_warnings_as_errors=false'
 		'fatal_linker_warnings=false'
 
 		# Save space by removing DLOG and DCHECK messages (about 6% reduction).
 		# 'logging_like_official_build=true'
-		'disable_fieldtrial_testing_config=true'
+		# 'disable_fieldtrial_testing_config=true'
 
 		'is_official_build=true'
 
@@ -226,7 +247,7 @@ do_configure() {
 		'is_cfi=false'
 		'use_thin_lto=false'
 		'use_cfi_icall=false'
-		'chrome_pgo_phase=0'
+		# 'chrome_pgo_phase=0'
 	)
 
 	# this does not work on ppc64 yet
@@ -251,7 +272,50 @@ do_configure() {
 		export CXXFLAGS="-Wno-unknown-warning-option"
 	fi
 
+	# Ungoogled Chromium flags.gn
+	conf+=(
+		'build_with_tflite_lib=false'
+		'chrome_pgo_phase=0'
+		'clang_use_chrome_plugins=false'
+		'disable_fieldtrial_testing_config=true'
+		'enable_hangout_services_extension=false'
+		'enable_js_type_check=false'
+		'enable_mdns=false'
+		'enable_mse_mpeg2ts_stream_parser=true'
+		'enable_nacl=false'
+		'enable_nacl_nonsfi=false'
+		'enable_one_click_signin=false'
+		'enable_reading_list=false'
+		'enable_remoting=false'
+		'enable_reporting=false'
+		'enable_service_discovery=false'
+		'exclude_unwind_tables=true'
+		'google_api_key=""'
+		'google_default_client_id=""'
+		'google_default_client_secret=""'
+		'safe_browsing_mode=0'
+		'treat_warnings_as_errors=false'
+		'use_official_google_api_keys=false'
+		'use_unofficial_version_number=false'
+	)
+
+	# Disable widevine on musl builds since it's not available anyway.
+	case $XBPS_TARGET_LIBC in
+		musl) conf+=( enable_widevine=false ) ;;
+		*) conf+=( enable_widevine=true ) ;;
+	esac
+
+	# Check if sndio was specified as a build option
+	if [ "$build_option_sndio" ]; then conf+=('use_sndio=true'); fi
+
+	# Zero the ccache statistics
+	ccache -z
+
 	out/Release/gn gen out/Release --args="${conf[*]}"
+
+	# no real purpose other than to verify if build flags are set up
+	echo "-> Zeroing Crime Network"
+	out/Release/gn args --list out/Release
 }
 do_build() {
 	if [ "$build_option_clang" ]; then
@@ -263,40 +327,44 @@ do_build() {
 		export CXXFLAGS="-Wno-unknown-warning-option"
 	fi
 
-	ninja -C out/Release ${makejobs} chrome chromedriver mksnapshot chrome_crashpad_handler
+	ninja -C out/Release ${makejobs} chrome chromedriver mksnapshot chrome_crashpad_handler chrome_sandbox
+
+	# Print ccache statistics
+	ccache -s
 }
 do_install() {
 	vinstall out/Release/chrome 755 usr/lib/${pkgname} ${pkgname}
 	vinstall out/Release/chrome_crashpad_handler 755 usr/lib/${pkgname} chrome_crashpad_handler
+	vinstall out/Release/chrome_sandbox 755 usr/lib/${pkgname} chrome_sandbox
 	vinstall out/Release/chromedriver 755 usr/lib/${pkgname} chromedriver
 	vinstall out/Release/libEGL.so 755 usr/lib/${pkgname} libEGL.so
 	vinstall out/Release/libGLESv2.so 755 usr/lib/${pkgname} libGLESv2.so
 
-	vcopy "out/Release/*.bin" usr/lib/chromium
-	vcopy "out/Release/*.pak" usr/lib/chromium
+	vcopy "out/Release/*.bin" usr/lib/${pkgname}
+	vcopy "out/Release/*.pak" usr/lib/${pkgname}
 
-	vmkdir usr/lib/chromium/locales
-	vcopy "out/Release/locales/*.pak" usr/lib/chromium/locales
+	vmkdir usr/lib/${pkgname}/locales
+	vcopy "out/Release/locales/*.pak" usr/lib/${pkgname}/locales
 
-	vmkdir usr/lib/chromium/swiftshader
-	vcopy "out/Release/swiftshader/*.so" usr/lib/chromium/swiftshader
+	vmkdir usr/lib/${pkgname}/swiftshader
+	vcopy "out/Release/swiftshader/*.so" usr/lib/${pkgname}/swiftshader
 
-	vinstall ${FILESDIR}/chromium.desktop 644 usr/share/applications
+	vinstall ${FILESDIR}/chromium.desktop 644 usr/share/applications ${pkgname}.desktop
 
-	vinstall out/Release/icudtl.dat 0644 usr/lib/chromium
+	vinstall out/Release/icudtl.dat 0644 usr/lib/${pkgname}
 
 	for size in 24 48 64 128 256; do
 		vinstall "chrome/app/theme/chromium/product_logo_${size}.png" \
 			644 \
-			usr/share/icons/hicolor/${size}x${size}/apps chromium.png
+			usr/share/icons/hicolor/${size}x${size}/apps ${pkgname}.png
 	done
 	for size in 16 32; do
 		vinstall "chrome/app/theme/default_100_percent/chromium/product_logo_${size}.png" \
 			644 \
-			usr/share/icons/hicolor/${size}x${size}/apps chromium.png
+			usr/share/icons/hicolor/${size}x${size}/apps ${pkgname}.png
 	done
 
-	vbin ${FILESDIR}/chromium.sh chromium
+	vbin ${FILESDIR}/chromium.sh ${pkgname}
 	vlicense LICENSE
-	ln -sf /usr/lib/chromium/chromedriver ${DESTDIR}/usr/bin/chromedriver
+	ln -sf /usr/lib/${pkgname}/chromedriver ${DESTDIR}/usr/bin/chromedriver
 }
