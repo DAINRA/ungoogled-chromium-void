@@ -2,6 +2,8 @@
 
 Ungoogled Chromium template and builds for Void Linux, based on the void-packages `Chromium` template.
 
+![GitHub release (latest by date)](https://img.shields.io/github/v/release/DAINRA/ungoogled-chromium-void?style=flat-square)
+
 ## Content Overview
 
 - [Building from sources](#building-from-source)
@@ -31,6 +33,7 @@ Ungoogled Chromium template and builds for Void Linux, based on the void-package
 
 Clone this repository or download the source archive from the [Releases](//github.com/DAINRA/ungoogled-chromium-void/releases) page.
 
+    # if it exists, remove the old void-packages/srcpkgs/ungoogled-chromium folder
     # copy the folder ungoogled-chromium-void/ungoogled-chromium to void-packages/srcpkgs/
     $ ./xbps-src pkg ungoogled-chromium
     $ xbps-install -vR hostdir/binpkgs ungoogled-chromium
@@ -51,8 +54,6 @@ All packages are build using `void-packages` with `build_options="clang vaapi pu
 - `debug` is disabled to reduce the package size
 - `js-optimize` is disabled (ungoogled-chromium flags.gn `enable_js_type_check=false`)
 
-Musl version is built with `enable_widevine=false` since it's not available anyway (might improve stability).
-
 ### Troubleshooting
 
 - In the past `gtk+3` was a runtime dependency for the package. On clean installs, it is required to install the `gtk+3` package manually.
@@ -62,11 +63,8 @@ Musl version is built with `enable_widevine=false` since it's not available anyw
 
 ### Available builds
 
-Architecture | Status
-:---: | ---
-**`x86_64`** | Released
-**`x86_64-musl`** | Released
-**`i686`** | Unreleased, builds fine, can't test if it's actually running.
+- **`x86_64`**
+- **`x86_64-musl`**
 
 ### Installing the binary package
 

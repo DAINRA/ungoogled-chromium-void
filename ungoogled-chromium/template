@@ -1,16 +1,16 @@
 # Template file for 'ungoogled-chromium'
 pkgname=ungoogled-chromium
 # See https://chromiumdash.appspot.com/releases?platform=Linux for the latest version
-version=94.0.4606.81
+version=95.0.4638.54
 revision=1
 archs="i686* x86_64* aarch64* armv7l* ppc64le*"
 short_desc="Google Chromium, sans integration with Google"
 maintainer="Dainra <an.costea.2015@gmail.com>"
 license="BSD-3-Clause"
-homepage="https://github.com/Eloston/ungoogled-chromium/"
+homepage="https://github.com/Eloston/ungoogled-chromium"
 distfiles="https://commondatastorage.googleapis.com/chromium-browser-official/chromium-${version}.tar.xz ${homepage}/archive/refs/tags/${version}-${revision}.tar.gz"
-checksum="7071aa2b2caf48094c2ae816395948b4daec940606f4982ad5bbf68e5d2de598
- dfb162c8824f98095bc5fa8928d44bcb5fb66a19873a5976b8059abe20cad6fe"
+checksum="3eef88d745e6ddaeaf507358f1510482d6f399cf335061bb1226a5f7120061fd
+ fe3a77372668b5f7de71705b768b78a2bb10f74e35bd85a0af9b982a39ff32d3"
 nocross=yes
 
 lib32disabled=yes
@@ -58,15 +58,6 @@ post_patch() {
 		done
 	fi
 
-	case "${XBPS_TARGET_MACHINE}" in
-	i686*)
-		for f in "${FILESDIR}"/i686-patches/*.patch; do
-			echo "Applying $f"
-			patch -Np0 -i "$f"
-		done
-		;;
-	esac
-
 	# Use the file at run time instead of effectively compiling it in
 	sed 's|//third_party/usb_ids/usb.ids|/usr/share/hwdata/usb.ids|g' \
 		-i services/device/public/cpp/usb/BUILD.gn
@@ -88,7 +79,7 @@ post_patch() {
 		tools/generate_shim_headers/generate_shim_headers.py
 
 	# Ungoogled Chromium prune, patch, domain substitution
-	echo "->Applying Feng Shui Shaders"
+	echo "-> Applying Feng Shui Shaders"
 	local UCDIR=${pkgname}-${version}-${revision}
 	echo "-> Binding Sapling Root System"
 	$UCDIR/utils/prune_binaries.py . $UCDIR/pruning.list
@@ -289,6 +280,7 @@ do_configure() {
 		'enable_remoting=false'
 		'enable_reporting=false'
 		'enable_service_discovery=false'
+		'enable_widevine=true'
 		'exclude_unwind_tables=true'
 		'google_api_key=""'
 		'google_default_client_id=""'
@@ -299,14 +291,8 @@ do_configure() {
 		'use_unofficial_version_number=false'
 	)
 
-	# Disable widevine on musl builds since it's not available anyway.
-	case $XBPS_TARGET_LIBC in
-		musl) conf+=( enable_widevine=false ) ;;
-		*) conf+=( enable_widevine=true ) ;;
-	esac
-
 	# Check if sndio was specified as a build option
-	if [ "$build_option_sndio" ]; then conf+=('use_sndio=true'); fi
+	if [ "$build_option_sndio" ]; then conf+=( 'use_sndio=true' ); fi
 
 	# Zero the ccache statistics
 	ccache -z
