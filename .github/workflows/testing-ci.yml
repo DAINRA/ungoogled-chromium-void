@@ -4,7 +4,7 @@ concurrency: kongou
 on:
   pull_request:
     types: [ labeled, synchronize ]
-    branches: [ testing ]
+    branches: [ testing, master ]
 
 jobs:
   setup:
@@ -19,6 +19,10 @@ jobs:
         with:
           path: master
 
+      - name: Xlint
+        run: |
+          xlint master/ungoogled-chromium/template
+
       - name: Update void-packages
         run: |
           cd void-packages
@@ -26,11 +30,9 @@ jobs:
 
       - name: Configure void-packages
         run: |
-          cp -r master/etc/* void-packages/etc
-          rm -r void-packages/srcpkgs/ungoogled-chromium
-          cp -r master/ungoogled-chromium void-packages/srcpkgs
-          cd void-packages
-          git reset --hard e7ca6798247fb7a2d6373dbc48697041df4ebd67
+          cp -rv master/etc/* void-packages/etc
+          rm -rv void-packages/srcpkgs/ungoogled-chromium
+          cp -rv master/ungoogled-chromium void-packages/srcpkgs
   
       - name: Bootstrap x86_64
         id: x86_64
@@ -55,7 +57,6 @@ jobs:
     runs-on: [ self-hosted ]
     timeout-minutes: 1440
     needs: [ setup ]
-    timeout-minutes: 1440
     outputs:
       filename: ${{ steps.build.outputs.filename }}
       hash: ${{ steps.build.outputs.hash }}
@@ -76,7 +77,6 @@ jobs:
     runs-on: [ self-hosted ]
     timeout-minutes: 1440
     needs: [ setup, build-x86_64 ]
-    timeout-minutes: 1440
     outputs:
       filename: ${{ steps.build.outputs.filename }}
       hash: ${{ steps.build.outputs.hash }}
