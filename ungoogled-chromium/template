@@ -37,7 +37,7 @@ makedepends="libpng-devel gtk+-devel gtk+3-devel nss-devel pciutils-devel
  minizip-devel jsoncpp-devel zlib-devel libcap-devel libXdamage-devel
  re2-devel fontconfig-devel freetype-devel opus-devel
  ffmpeg-devel libva-devel python-setuptools xcb-proto libcurl-devel
- $(vopt_if pipewire pipewire-devel) $(vopt_if sndio sndio-devel)"
+ $(vopt_if pipewire pipewire-devel) $(vopt_if sndio sndio-devel) libxshmfence-devel"
 depends="libexif hwids desktop-file-utils hicolor-icon-theme xdg-utils"
 
 case "$XBPS_TARGET_MACHINE" in
