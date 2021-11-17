@@ -152,17 +152,3 @@ jobs:
         id: unmount
         run: |
           sync; umount void-packages/hostdir/ccache
-
-  merge:
-    runs-on: [ self-hosted ]
-    needs: [ release ]
-    steps:
-    - name: Merge master branch into testing branch
-      uses: thomaseizinger/create-pull-request@master
-      with:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        head: master
-        base: testing
-        title: "Merge master branch into the testing branch"
-        body: |
-          This pull request merges the master branch into the testing branch.
