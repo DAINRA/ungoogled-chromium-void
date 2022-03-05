@@ -1,7 +1,7 @@
 # Template file for 'ungoogled-chromium'
 pkgname=ungoogled-chromium
 # See https://chromiumdash.appspot.com/releases?platform=Linux for the latest version
-version=98.0.4758.102
+version=99.0.4844.51
 revision=1
 archs="i686* x86_64* aarch64* armv7l* ppc64le*"
 short_desc="Google Chromium, sans integration with Google"
@@ -10,8 +10,8 @@ license="BSD-3-Clause"
 homepage="https://github.com/Eloston/ungoogled-chromium"
 distfiles="https://commondatastorage.googleapis.com/chromium-browser-official/chromium-${version}.tar.xz
  ${homepage}/archive/refs/tags/${version}-${revision}.tar.gz"
-checksum="415b47e912766cd07f9f52e95bc6470b835acf1d6f566ae32e66ba8be608f33e
- 48063bb9dbc62326ce66c3e274f38daa70f201d41732825aba8ff28953cc4048"
+checksum="97c52e57eca0dc8b752d274047f38c88aaa86036c0587b26b056efbd3fb2bae3
+ 8aa65f6d96cb1400b83092adab9a64e0d81a7f12bd6ee5e2b090d2d9407e645d"
 
 lib32disabled=yes
 
@@ -227,7 +227,6 @@ do_configure() {
 
 	conf=(
 		# 'enable_nacl=false'
-		'enable_nacl_nonsfi=false'
 
 		'use_sysroot=false'
 
