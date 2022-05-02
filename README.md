@@ -59,8 +59,8 @@ All packages are build using `void-packages` with `build_options="clang vaapi pu
 
 - In the past `gtk+3` was a runtime dependency for the package. On clean installs, it is required to install the `gtk+3` package manually.
 - i686 version fails to compile if `sndio` is enabled. Also breaks ungoogled-chromium patching. The patch is moved to the files directory and I have added a few checks to the template, so unless it is specified in `build_options` it won't be patched in.
-- To enable VAAPI edit `/usr/bin/ungoogled-chromium` and add `--enable-features=VaapiVideoDecoder` to `CHROME_FLAGS`. More info [here](//chromium.googlesource.com/chromium/src/+/refs/heads/main/docs/gpu/vaapi.md). Also check [Void Handbook](//docs.voidlinux.org/config/graphical-session/graphics-drivers/intel.html) in case of problems.
-- As a warning, you might experience some stability issues on musl (tabs crashing with code 11 on javascript heavy sites). Most of the instability is caused by musl and has nothing to do with Chromium or the patches from Void or Ungoogled Chromium. See [Musl crashes mitigaton](#musl-crashes-mitigaton)
+- To enable VAAPI edit `/usr/bin/ungoogled-chromium` and add `--enable-features=VaapiVideoDecoder` to `CHROME_FLAGS` (or create an [environment variable](//wiki.archlinux.org/title/Environment_variables)). More info [here](//chromium.googlesource.com/chromium/src/+/refs/heads/main/docs/gpu/vaapi.md). Also check [Void Handbook](//docs.voidlinux.org/config/graphical-session/graphics-drivers/intel.html) in case of problems.
+- As a warning, you might experience some stability issues on musl (tabs crashing with code 11 on javascript heavy sites). Most of the instability is caused by musl and has nothing to do with Chromium or the patches from Void or Ungoogled Chromium. See [Musl crashes mitigaton](#musl-crashes-mitigaton).
 
 ### Available builds
 
@@ -78,7 +78,7 @@ Index and install the package:
     $ ungoogled-chromium
 
 ## Musl crashes mitigaton
-If you experience frequent crashes on musl libc, add --js-flags=--jitless to chrome flags as a temporary fix.
+If you experience frequent crashes on musl libc, add `--js-flags=--jitless` to `CHROME_FLAGS` as a temporary fix.
 
 ## Credits
 
