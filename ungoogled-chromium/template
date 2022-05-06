@@ -372,11 +372,12 @@ do_configure() {
 
 do_build() {
 	_setup_toolchain
-	CCACHE_SLOPPINESS=include_file_mtime ninja -C out/Release ${makejobs} chrome chromedriver chrome_crashpad_handler
+	CCACHE_SLOPPINESS=include_file_mtime ninja -C out/Release ${makejobs} chrome chrome_sandbox chromedriver chrome_crashpad_handler
 }
 
 do_install() {
 	vinstall out/Release/chrome 755 usr/lib/${pkgname} ${pkgname}
+	vinstall out/Release/chrome_sandbox 4755 usr/lib/${pkgname} chrome-sandbox
 	vinstall out/Release/chrome_crashpad_handler 755 usr/lib/${pkgname} chrome_crashpad_handler
 	vinstall out/Release/chromedriver 755 usr/lib/${pkgname} chromedriver
 	vinstall out/Release/libEGL.so 755 usr/lib/${pkgname} libEGL.so
