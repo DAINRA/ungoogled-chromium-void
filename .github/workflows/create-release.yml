@@ -11,7 +11,7 @@ jobs:
   setup:
     name: Setup build
     runs-on: [ self-hosted ]
-    if: github.event.pull_request.merged == true && !contains(github.event.head_commit.message, 'ci skip')
+    if: github.event.pull_request.merged == true && "!contains(github.event.pull_request.title, '[ci skip]') && !contains(github.event.pull_request.body, '[ci skip]')"
     environment:
       name: release
     steps:
