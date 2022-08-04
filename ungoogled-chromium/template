@@ -1,7 +1,7 @@
 # Template file for 'ungoogled-chromium'
 pkgname=ungoogled-chromium
 # See https://chromiumdash.appspot.com/releases?platform=Linux for the latest version
-version=103.0.5060.53
+version=104.0.5112.81
 revision=1
 archs="i686* x86_64* aarch64* armv7l* ppc64le*"
 short_desc="Google Chromium, sans integration with Google"
@@ -10,8 +10,8 @@ license="BSD-3-Clause"
 homepage="https://github.com/ungoogled-software/ungoogled-chromium"
 distfiles="https://commondatastorage.googleapis.com/chromium-browser-official/chromium-${version}.tar.xz
  ${homepage}/archive/refs/tags/${version}-${revision}.tar.gz"
-checksum="0ecbae14670506da90c8bf744f83f52a64a5fff0765c2e2e066b0e68b805b101
- 96c7adbe1d9ec6fe77bb3d299a4bbcc63bcdbec04f736a73f218949a0ea5a83e"
+checksum="1eb8b75658f1959af4041911f3663a568363bd8c267a0cd5e85809bbff972774
+ 75fbb5a8679522cd81520a5623e18d8aa4783d5403d2bc26aacab90d899a7a15"
 
 lib32disabled=yes
 
@@ -22,10 +22,10 @@ desc_option_debug="Build with debug symbols"
 desc_option_js_optimize="Optimize the JS used for Chromium's UI"
 desc_option_pipewire="Enable support for screen sharing for WebRTC via PipeWire"
 
-hostmakedepends="$(vopt_if clang "clang lld llvm12") python python3 pkgconf perl gperf bison ninja nodejs hwids
+hostmakedepends="$(vopt_if clang "clang lld llvm12") python3 pkgconf perl gperf bison ninja nodejs hwids
  libatomic-devel libevent-devel libglib-devel $(vopt_if js_optimize openjdk) wayland-devel libepoxy-devel git"
-makedepends="libpng-devel gtk+-devel gtk+3-devel nss-devel pciutils-devel
- libXi-devel libgcrypt-devel libgnome-keyring-devel cups-devel elfutils-devel
+makedepends="libpng-devel gtk+3-devel nss-devel pciutils-devel
+ libXi-devel libgcrypt-devel cups-devel elfutils-devel
  libXcomposite-devel speech-dispatcher-devel libXrandr-devel mit-krb5-devel
  libXScrnSaver-devel alsa-lib-devel snappy-devel libdrm-devel
  libxml2-devel libxslt-devel $(vopt_if pulseaudio pulseaudio-devel) libexif-devel
@@ -33,7 +33,7 @@ makedepends="libpng-devel gtk+-devel gtk+3-devel nss-devel pciutils-devel
  libjpeg-turbo-devel libevent-devel json-c-devel
  minizip-devel jsoncpp-devel zlib-devel libcap-devel libXdamage-devel
  re2-devel fontconfig-devel freetype-devel opus-devel libatomic-devel
- ffmpeg-devel libva-devel python-setuptools xcb-proto libcurl-devel
+ ffmpeg-devel libva-devel xcb-proto libcurl-devel
  libxshmfence-devel
  $(vopt_if pipewire pipewire-devel) $(vopt_if sndio sndio-devel)"
 depends="libexif hwids desktop-file-utils hicolor-icon-theme xdg-utils"
@@ -262,6 +262,9 @@ do_configure() {
 
 		"use_vaapi=$(vopt_if vaapi true false)"
 
+		# deprecated
+		'use_gnome_keyring=false'
+
 		# https://chromium.googlesource.com/chromium/src/+/master/docs/closure_compilation.md
 		# "enable_js_type_check=$(vopt_if js_optimize true false)"
 
@@ -347,7 +350,6 @@ do_configure() {
 		'enable_mdns=false'
 		'enable_mse_mpeg2ts_stream_parser=true'
 		'enable_nacl=false'
-		'enable_one_click_signin=false'
 		'enable_reading_list=false'
 		'enable_remoting=false'
 		'enable_reporting=false'
