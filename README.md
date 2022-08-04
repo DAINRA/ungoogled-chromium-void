@@ -1,3 +1,7 @@
+# Notice
+
+**Publishing of binaries disabled for now due to build machine hardware failure.**
+
 # Ungoogled Chromium for Void Linux
 
 Ungoogled Chromium template and builds for Void Linux, based on the void-packages `Chromium` template.
