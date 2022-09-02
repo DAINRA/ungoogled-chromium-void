@@ -1,10 +1,22 @@
-# Notice
+**Changelog**
+ 
+- Building of binaries resumed. Since the build machine (cache building clocks at about 1 day/arch) there might be a delay of up to ~2 days between template and binaries publish.
+- Added package signing to the release workflow, this allows the releases page to be used as a repository.
+  If you choose to get updates via xbps-install instead of manually downloading, create for example (*link is the same for both x86_64 and x86_64-musl builds*):
 
-**Publishing of binaries disabled for now due to build machine hardware failure.**
+  ```
+  cat << EOF > /etc/xbps.d/20-ungoogled-chromium.conf
+  repository=https://github.com/DAINRA/ungoogled-chromium-void/releases/latest/download/
+  EOF
+  ```
+
+  First `xbps-install -S` run it will ask to import the repository key, same as [88:ac:8f:99:4d:b0:20:8f:6b:f0:8f:49:b9:13:fb:17.plist](void-packages/common/repo-keys/88:ac:8f:99:4d:b0:20:8f:6b:f0:8f:49:b9:13:fb:17.plist).
+- New release workflow includes removal of old binaries in order to keep the total repository size at a resonable amount.  
+  Only the files for the 5 most recent tags (or ~1Gb of data) will be kept.
 
 # Ungoogled Chromium for Void Linux
 
-Ungoogled Chromium template and builds for Void Linux, based on the void-packages `Chromium` template.
+Ungoogled Chromium template and builds for Void Linux, based on the void-packages [`chromium`](//github.com/void-linux/void-packages/blob/master/srcpkgs/chromium) template.
 
 ![GitHub release (latest by date)](https://img.shields.io/github/v/release/DAINRA/ungoogled-chromium-void?style=flat-square)
 
@@ -49,7 +61,7 @@ Clone this repository or download the source archive from the [Releases](//githu
 
 ### Important note
 
-- Releases tagged **`Release`** are always based on official [void-packages](//github.com/void-linux/void-packages/tree/master/srcpkgs/chromium) template and [ungoogled-chromium](//github.com/Eloston/ungoogled-chromium/releases) release.
+- Releases tagged **`Release`** are always based on official [void-packages](//github.com/void-linux/void-packages/tree/master/srcpkgs/chromium) template and [ungoogled-chromium](//github.com/ungoogled-software/ungoogled-chromium/releases) release.
 - Releases tagged with **`Testing`** (or **`Pre-release`**) are personal builds based on either void-packages **or** ungoogled-chromium. For example if the void template is on an older version, but the latest version builds without extra patches and all that is needed is a version bump. *If you use this version just be aware that some patches might be missing, I only test if the browser works and there are no obvious errors*.
 
 ### Build Notes
@@ -86,6 +98,6 @@ If you experience frequent crashes on musl libc, add `--js-flags=--jitless` to `
 
 ## Credits
 
-- [Ungoogled Chromium](//github.com/Eloston/ungoogled-chromium)
+- [Ungoogled Chromium](//github.com/ungoogled-software/ungoogled-chromium)
 - [The Void source packages collection](//github.com/void-linux/void-packages)
 - [The Void (Linux) distribution](//voidlinux.org/)
