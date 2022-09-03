@@ -1,26 +1,24 @@
-name: Create new release
-concurrency: kongou
+name: Create release
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: false
 
 on:
-  pull_request:
-    types: [ closed ]
-    branches: [ master ]
-    paths: [ 'ungoogled-chromium/**' ]
+  workflow_dispatch:
 
 jobs:
-  setup:
-    name: Setup build
-    runs-on: [ self-hosted ]
-    if: github.event.pull_request.merged == true && !contains(github.event.pull_request.title, '[ci skip]') && !contains(github.event.pull_request.body, '[ci skip]')
-    environment:
-      name: release
+  Fetch:
+    runs-on: self-hosted
+    outputs:
+      version: ${{ steps.version.outputs.version }}
     steps:
-      - name: Checkout source
+      - name: Fetch repository
         uses: actions/checkout@v2
         with:
           path: master
 
-      - name: Checkout void-packages
+      - name: Fetch void-packages
         uses: actions/checkout@v2
         with:
           repository: void-linux/void-packages
@@ -28,127 +26,77 @@ jobs:
 
       - name: Configure void-packages
         run: |
-          cp -rv master/etc/* void-packages/etc
-          cp -rv master/ungoogled-chromium void-packages/srcpkgs
-  
-      - name: Bootstrap x86_64
-        id: x86_64
-        run: |
-          cd void-packages
-          ./xbps-src binary-bootstrap
+          cp -r master/void-packages ./ 2>/dev/null
 
-      - name: Bootstrap x86_64-musl
-        id: x86_64-musl
-        if: steps.x86_64.outcome == 'success'
-        run: |
-          cd void-packages
-          ./xbps-src -m masterdir-musl binary-bootstrap x86_64-musl
-
-      - name: Mount local ccache
-        if: steps.x86_64.outcome == 'success' && steps.x86_64-musl.outcome == 'success'
-        run: |
-          mount void-packages/hostdir/ccache
-
-  build-x86_64:
-    name: Build x86_64
-    runs-on: [ self-hosted ]
-    timeout-minutes: 1440
-    needs: [ setup ]
-    outputs:
-      filename: ${{ steps.build.outputs.filename }}
-      hash: ${{ steps.build.outputs.hash }}
-    steps:
-      - name: Do build
-        id: build
-        run: |
-          cd void-packages
-          ./xbps-src pkg ungoogled-chromium
-          cd hostdir/binpkgs
-          PKG_FILE=$(basename ungoogled-chromium-*.x86_64.xbps)
-          PKG_HASH=$(sha256sum $PKG_FILE)
-          echo "::set-output name=filename::$PKG_FILE"
-          echo "::set-output name=hash::$PKG_HASH"
-
-  build-x86_64-musl:
-    name: Build x86_64-musl
-    runs-on: [ self-hosted ]
-    timeout-minutes: 1440
-    needs: [ setup, build-x86_64 ]
-    outputs:
-      filename: ${{ steps.build.outputs.filename }}
-      hash: ${{ steps.build.outputs.hash }}
-    steps:
-      - name: Do build
-        id: build
-        run: |
-          cd void-packages
-          ./xbps-src -m masterdir-musl pkg ungoogled-chromium
-          cd hostdir/binpkgs
-          PKG_FILE=$(basename ungoogled-chromium-*.x86_64-musl.xbps)
-          PKG_HASH=$(sha256sum $PKG_FILE)
-          echo "::set-output name=filename::$PKG_FILE"
-          echo "::set-output name=hash::$PKG_HASH"
-
-  release:
-    name: Create Release
-    runs-on: [ self-hosted ]
-    needs: [ build-x86_64, build-x86_64-musl ]
-    steps:
       - id: version
         run: |
-          echo "::set-output name=version::$(echo ${{ needs.build-x86_64.outputs.filename }} | sed 's/.*-\([0-9\.]\+_[0-9]\+\).*/\1/')"
+          echo "::set-output name=version::$( cat master/version )"
 
-      - id: hash
-        run: |
-          cd void-packages/hostdir/binpkgs
-          echo "${{ needs.build-x86_64.outputs.hash }}" | sha256sum -c
-          echo "${{ needs.build-x86_64-musl.outputs.hash }}" | sha256sum -c
-
-      - name: Create new release
-        uses: actions/create-release@v1
-        id: create_release
-        with:
-          draft: false
-          prerelease: false
-          release_name: Release v${{ steps.version.outputs.version }}
-          tag_name: v${{ steps.version.outputs.version }}
-          body: |
-            **Sha256 checksums**
-
-            ```
-                ${{ needs.build-x86_64.outputs.hash }}
-                ${{ needs.build-x86_64-musl.outputs.hash }}
-            ```
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Upload x86_64 asset
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: void-packages/hostdir/binpkgs/${{ needs.build-x86_64.outputs.filename }}
-          asset_name: ${{ needs.build-x86_64.outputs.filename }}
-          asset_content_type: application/zstd
-
-      - name: Upload x86_64-musl asset
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: void-packages/hostdir/binpkgs/${{ needs.build-x86_64-musl.outputs.filename }}
-          asset_name: ${{ needs.build-x86_64-musl.outputs.filename }}
-          asset_content_type: application/zstd
-
-  clean:
-    name: Cleanup
-    runs-on: [ self-hosted ]
-    needs: [ setup, build-x86_64, build-x86_64-musl, release ]
-    if: always() && needs.setup.result == 'success'
+  Bootstrap:
+    needs: [Fetch]
+    strategy:
+      max-parallel: 1
+      matrix:
+        arch: [x86_64, x86_64-musl]
+    runs-on: self-hosted
     steps:
-      - name: Unmount local cache
-        id: unmount
+      - name: Bootstrap ${{ matrix.arch }}
         run: |
-          sync; umount void-packages/hostdir/ccache
+          cd void-packages
+          ./xbps-src -H /repository -m masterdir-${{ matrix.arch }} binary-bootstrap ${{ matrix.arch }}
+          ./xbps-src -H /repository -m masterdir-${{ matrix.arch }} fetch ungoogled-chromium
+
+  Build:
+    needs: [Fetch, Bootstrap]
+    strategy:
+      max-parallel: 1
+      matrix:
+        arch: [x86_64, x86_64-musl]
+    runs-on: self-hosted
+    environment:
+      name: release
+    env:
+      XBPS_TARGET_ARCH: ${{ matrix.arch }}
+    steps:
+      - name: Build ${{ matrix.arch }}
+        run: |
+          cd void-packages
+          ./xbps-src -H /repository -m masterdir-${{ matrix.arch }} -C pkg ungoogled-chromium
+      - name: Sign ${{ matrix.arch }} package
+        run: |
+          cd /repository/binpkgs
+          xbps-rindex -r $PWD
+          XBPS_PASSPHRASE=${{ secrets.SUPERBIA }} xbps-rindex --sign --signedby "Shiraori archive" --privkey /repository/shiraori.pem $PWD
+          XBPS_PASSPHRASE=${{ secrets.SUPERBIA }} xbps-rindex --sign-pkg --privkey /repository/shiraori.pem $PWD/*.xbps
+          xbps-rindex -c $PWD
+          sha256sum ungoogled-chromium-${{ needs.Fetch.outputs.version }}.${{ matrix.arch }}.xbps | tee -a ${{ github.workspace }}/void-packages/sum
+
+  Release:
+    needs: [Fetch, Build]
+    runs-on: self-hosted
+    steps:
+      - name: Checksum check
+        run: |
+          cd /repository/binpkgs
+          cat ${{ github.workspace }}/void-packages/sum | sha256sum -c
+
+      - name: Publish
+        uses: softprops/action-gh-release@v1
+        with:
+          body_path: ${{ github.workspace }}/void-packages/sum
+          files: |
+            /repository/binpkgs/ungoogled-chromium-${{ needs.Fetch.outputs.version }}.*.xbps
+            /repository/binpkgs/ungoogled-chromium-${{ needs.Fetch.outputs.version }}.*.sig
+            /repository/binpkgs/*-repodata
+          tag_name: ${{ needs.Fetch.outputs.version }}
+
+  Cleanup:
+    needs: [Release]
+    runs-on: self-hosted
+    steps:
+      - name: Cleanup old release files
+        uses: tinoji/delete-older-release-assets@v1.0.1
+        with:
+          keep_latest: 5
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
