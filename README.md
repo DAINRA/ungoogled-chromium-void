@@ -1,103 +1,129 @@
-**Changelog**
- 
-- Building of binaries resumed. Since the build machine (cache building clocks at about 1 day/arch) there might be a delay of up to ~2 days between template and binaries publish.
-- Added package signing to the release workflow, this allows the releases page to be used as a repository.
-  If you choose to get updates via xbps-install instead of manually downloading, create for example (*link is the same for both x86_64 and x86_64-musl builds*):
-
-  ```
-  cat << EOF > /etc/xbps.d/20-ungoogled-chromium.conf
-  repository=https://github.com/DAINRA/ungoogled-chromium-void/releases/latest/download/
-  EOF
-  ```
-
-  First `xbps-install -S` run it will ask to import the repository key, same as [88:ac:8f:99:4d:b0:20:8f:6b:f0:8f:49:b9:13:fb:17.plist](void-packages/common/repo-keys/88:ac:8f:99:4d:b0:20:8f:6b:f0:8f:49:b9:13:fb:17.plist).
-- New release workflow includes removal of old binaries in order to keep the total repository size at a resonable amount.  
-  Only the files for the 5 most recent tags (or ~1Gb of data) will be kept.
-
-# Ungoogled Chromium for Void Linux
-
-Ungoogled Chromium template and builds for Void Linux, based on the void-packages [`chromium`](//github.com/void-linux/void-packages/blob/master/srcpkgs/chromium) template.
+# Ungoogled Chromium for Void Linux  
+Ungoogled Chromium template and builds for Void Linux, based on the void-packages [chromium][1] template.
 
 ![GitHub release (latest by date)](https://img.shields.io/github/v/release/DAINRA/ungoogled-chromium-void?style=flat-square)
 
 ## Content Overview
 
-- [Building from sources](#building-from-source)
-- [Binary release](#binary-release)
-    - [Important note](#important-note)
-    - [Build Notes](#build-notes)
-    - [Troubleshooting](#troubleshooting)
+- [**Building from sources**](#building-from-source)
+- [**Binary release**](#binary-release)
     - [Available builds](#available-builds)
     - [Installing the binary package](#installing-the-binary-package)
-- [Musl crashes mitigaton](#musl-crashes-mitigaton)
-- [Credits](#credits)
+- [**Troubleshooting**](#troubleshooting)
+    - [Musl crashes mitigation](#musl-crashes-mitigation)
+    - [General tweaks](#general-tweaks)
+- [**Credits**](#credits)
 
 ## Building from source
 
-*If you haven't set up the void-packages repository consult this [page](//github.com/void-linux/void-packages/#readme) for more information. Relevant section:*
-
->### Quick start
+> **Note**
 >
->Clone the `void-packages` git repository and install the bootstrap packages:
+> *Consult void-packages [documentation][2] for more information about setting it up.*
 >
->```
->$ git clone git://github.com/void-linux/void-packages.git
->$ cd void-packages
->$ ./xbps-src binary-bootstrap
->```
+> [*Quick start*][2a]
+>
+> [*Building packages natively for the musl C library*][2b]
 
-*Recommended to use **`git clone --depth 1`** to fetch only the current branch instead of the full tree.*
+Clone and setup the void-packages repository in a work directory and:
 
-Clone this repository or download the source archive from the [Releases](//github.com/DAINRA/ungoogled-chromium-void/releases) page.
-
-    # if it exists, remove the old void-packages/srcpkgs/ungoogled-chromium folder
-    # copy the folder ungoogled-chromium-void/ungoogled-chromium to void-packages/srcpkgs/
-    $ ./xbps-src pkg ungoogled-chromium
-    $ xbps-install -vR hostdir/binpkgs ungoogled-chromium
-
-*Also check this [section](//github.com/void-linux/void-packages/#building-packages-natively-for-the-musl-c-library) of the void-packages documentation in case you want to cross-compile.*
+```shell
+git clone --depth=1 //github.com/DAINRA/ungoogled-chromium-void.git
+[[ -d void-packages/srcpkgs/ungoogled-chromium ]] && rm -r void-packages/srcpkgs/ungoogled-chromium
+cp -r ungoogled-chromium-void/void-packages/srcpkgs/ungoogled-chromium void-packages/srcpkgs/
+cd void-packages
+./xbps-src pkg ungoogled-chromium
+```
 
 ## Binary release
 
-### Important note
+```shell
+./xbps-src show-options ungoogled-chromium
+=> ungoogled-chromium-x.x.x.x_x: the following build options are set:
+   clang: Use clang to build (ON)
+   pipewire: Enable support for screen sharing for WebRTC via PipeWire (ON)
+   pulseaudio: Enable support for the PulseAudio sound server (ON)
+   vaapi: Enable support for VA-API (ON)
+   debug: Build with debug symbols (OFF)
+   js_optimize: Optimize the JS used for Chromium's UI (OFF)
+   sndio: Enable support for the sndio sound server (OFF)
+```
 
-- Releases tagged **`Release`** are always based on official [void-packages](//github.com/void-linux/void-packages/tree/master/srcpkgs/chromium) template and [ungoogled-chromium](//github.com/ungoogled-software/ungoogled-chromium/releases) release.
-- Releases tagged with **`Testing`** (or **`Pre-release`**) are personal builds based on either void-packages **or** ungoogled-chromium. For example if the void template is on an older version, but the latest version builds without extra patches and all that is needed is a version bump. *If you use this version just be aware that some patches might be missing, I only test if the browser works and there are no obvious errors*.
-
-### Build Notes
-
-All packages are build using `void-packages` with `build_options="clang vaapi pulseaudio pipewire"`.
-
-- `debug` is disabled to reduce the package size
-- `js-optimize` is disabled (ungoogled-chromium flags.gn `enable_js_type_check=false`)
-
-### Troubleshooting
-
-- In the past `gtk+3` was a runtime dependency for the package. On clean installs, it is required to install the `gtk+3` package manually.
-- i686 version fails to compile if `sndio` is enabled. Also breaks ungoogled-chromium patching. The patch is moved to the files directory and I have added a few checks to the template, so unless it is specified in `build_options` it won't be patched in.
-- To enable VAAPI edit `/usr/bin/ungoogled-chromium` and add `--enable-features=VaapiVideoDecoder` to `CHROME_FLAGS` (or create an [environment variable](//wiki.archlinux.org/title/Environment_variables)). More info [here](//chromium.googlesource.com/chromium/src/+/refs/heads/main/docs/gpu/vaapi.md). Also check [Void Handbook](//docs.voidlinux.org/config/graphical-session/graphics-drivers/intel.html) in case of problems.
-- As a warning, you might experience some stability issues on musl (tabs crashing with code 11 on javascript heavy sites). Most of the instability is caused by musl and has nothing to do with Chromium or the patches from Void or Ungoogled Chromium. See [Musl crashes mitigaton](#musl-crashes-mitigaton).
+- `js_optimized` disabled as per [enable_js_type_check=false][3].
+- `sndio` is disabled (same as the void-linux build) and `sndio.patch` is moved to the files directory.  
+  If the option is enabled, it is applied at the end of the patching stage, otherwise it causes patching to fail.
+- [remove-strip_binary.patch][4] removed since it is already included in [fix-building-with-prunned-binaries.patch][5].
 
 ### Available builds
 
-- **`x86_64`**
-- **`x86_64-musl`**
+You can check the workflow file for the available builds:
+
+https://github.com/DAINRA/ungoogled-chromium-void/blob/17c6b58ef263d3dc2868102a0b9b6398de140c92/.github/workflows/create-release.yml#L35-L40
+
+and the Actions tab for current [build progress](//github.com/DAINRA/ungoogled-chromium-void/actions/workflows/create-release.yml).
 
 ### Installing the binary package
 
-Download the `xbps` package matching your architecture and C library from the [Releases](//github.com/DAINRA/ungoogled-chromium-void/releases) page.
+#### Method 1 - manual update
 
-Index and install the package:
+Download the `xbps` package from the [releases](//github.com/DAINRA/ungoogled-chromium-void/releases) page, index and install the package:
 
-    $ xbps-rindex -a *.xbps
-    $ sudo xbps-install -vR $PWD ungoogled-chromium
-    $ ungoogled-chromium
+```shell
+xbps-rindex -a *.xbps
+sudo xbps-install -vR $PWD ungoogled-chromium
+```
 
-## Musl crashes mitigaton
-If you experience frequent crashes on musl libc, add `--js-flags=--jitless` to `CHROME_FLAGS` as a temporary fix.
+#### Method 2 - updates handled by xbps-install
+
+Add the releases page as a repository:
+
+```shell
+cat << EOF > /etc/xbps.d/20-ungoogled-chromium.conf
+repository=//github.com/DAINRA/ungoogled-chromium-void/releases/latest/download/
+EOF
+xbps-install -Su ungoogled-chromium
+```
+
+First `xbps-install -S` run it will ask to import the repository key, same as [88:ac:8f:99:4d:b0:20:8f:6b:f0:8f:49:b9:13:fb:17.plist](void-packages/common/repo-keys/88:ac:8f:99:4d:b0:20:8f:6b:f0:8f:49:b9:13:fb:17.plist).
+
+## Troubleshooting
+
+- Although it is not included in the run dependencies, `gtk+3` package must be installed.
+- To enable VAAPI add `--enable-features=VaapiVideoDecoder` to `CHROME_FLAGS` [environment variable][6].  
+  More info [vaapi.md][7]. Also check [Void Handbook][8] in case of problems.
+- For VAAPI `--disable-features=UseChromeOSDirectVideoDecoder` might also be needed.  
+  Check in `chrome://gpu` if `Video Decode: Hardware accelerated`.
+
+### Musl crashes mitigation
+
+- Make sure you have `dbus` running (on glibc it doesn't matter).  
+  Symptoms: crashes, pages stalling and refusing to load until browser restart, plugin crashes.
+- Try adding `--js-flags=--jitless` to `CHROME_FLAGS`. If nothing else, it's a security hardening option.
+
+### General tweaks
+
+- Lower ram usage: `--renderer-process-limit=2` [renderer-process-limit][9].
+- Reduce disk activity: `--disk-cache-size=1 --v8-cache-options=none` [disk-cache-size][10], [v8-cache-options][11].
+- Dark Mode: `chrome://flags/#enable-force-dark`.
+- Global media controls can cause crashes either by opening or closing it, as described in this [issue][12].  
+  Either avoid using the feature or disable it completely (`--disable-features=GlobalMediaControls`).
 
 ## Credits
 
 - [Ungoogled Chromium](//github.com/ungoogled-software/ungoogled-chromium)
 - [The Void source packages collection](//github.com/void-linux/void-packages)
 - [The Void (Linux) distribution](//voidlinux.org/)
+
+[1]:  //github.com/void-linux/void-packages/blob/master/srcpkgs/chromium
+[2]:  //github.com/void-linux/void-packages/#readme
+[2a]: //github.com/void-linux/void-packages/#quick-start
+[2b]: //github.com/void-linux/void-packages/#building-for-musl
+[3]:  //github.com/ungoogled-software/ungoogled-chromium/blob/master/flags.gn
+[4]:  //github.com/void-linux/void-packages/blob/master/srcpkgs/chromium/patches/remove-strip_binary.patch
+[5]:  //github.com/ungoogled-software/ungoogled-chromium/blob/master/patches/core/ungoogled-chromium/fix-building-with-prunned-binaries.patch
+[6]:  //wiki.archlinux.org/title/Environment_variables
+[7]:  //chromium.googlesource.com/chromium/src/+/refs/heads/main/docs/gpu/vaapi.md
+[8]:  //docs.voidlinux.org/config/graphical-session/graphics-drivers/intel.html
+[9]:  //peter.sh/experiments/chromium-command-line-switches/#renderer-process-limit
+[10]: //peter.sh/experiments/chromium-command-line-switches/#disk-cache-size
+[11]: //peter.sh/experiments/chromium-command-line-switches/#v8-cache-options
+[12]: //bugs.chromium.org/p/chromium/issues/detail?id=1314342
