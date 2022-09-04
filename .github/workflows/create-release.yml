@@ -12,6 +12,8 @@ jobs:
     runs-on: self-hosted
     outputs:
       version: ${{ steps.version.outputs.version }}
+    environment:
+      name: release
     steps:
       - name: Fetch repository
         uses: actions/checkout@v2
@@ -53,8 +55,7 @@ jobs:
       matrix:
         arch: [x86_64, x86_64-musl]
     runs-on: self-hosted
-    environment:
-      name: release
+    timeout-minutes: 1440
     env:
       XBPS_TARGET_ARCH: ${{ matrix.arch }}
     steps:

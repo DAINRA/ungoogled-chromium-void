@@ -1,7 +1,7 @@
 # Template file for 'ungoogled-chromium'
 pkgname=ungoogled-chromium
 # See https://chromiumdash.appspot.com/releases?platform=Linux for the latest version
-version=105.0.5195.102
+version=106.0.5249.61
 revision=1
 archs="i686* x86_64* aarch64* armv7l* ppc64le*"
 short_desc="Google Chromium, sans integration with Google"
@@ -10,8 +10,8 @@ license="BSD-3-Clause"
 homepage="https://github.com/ungoogled-software/ungoogled-chromium"
 distfiles="https://commondatastorage.googleapis.com/chromium-browser-official/chromium-${version}.tar.xz
  ${homepage}/archive/refs/tags/${version}-${revision}.tar.gz"
-checksum="1cba0527c951e3c506ade96cf6ec2507ee9d43661764731ed896348182369262
- 7f6b3397aee0b659c5964a6419f2cdf28e2b19e16700da4613f3aa9c7dde876d"
+checksum="f27acb929b12fc9e60b035c2f9f1879866eec7cfe1665dccf544048e9e931497
+ a8edef85cd3bb6200e404483e7a6705fa594bf94fec9c19fa8ae5f28f471d227"
 
 lib32disabled=yes
 
@@ -369,12 +369,28 @@ do_configure() {
 	if [ "$build_option_sndio" ]; then conf+=( 'use_sndio=true' ); fi
 
 	_setup_toolchain
+
+    # Facilitate deterministic builds (taken from build/config/compiler/BUILD.gn)
+    # https://github.com/archlinux/svntogit-packages/blob/packages/chromium/trunk/PKGBUILD
+    export CPPFLAGS
+    CFLAGS+=" -Wno-builtin-macro-redefined"
+    CXXFLAGS+=" -Wno-builtin-macro-redefined"
+    CPPFLAGS+=" -D__DATE__=  -D__TIME__=  -D__TIMESTAMP__="
+
 	out/Release/gn gen out/Release --args="${conf[*]}"
+
+    # For debuging purposes
+    echo "-> Reticulating splines"
+    out/Release/gn args --list out/Release
 }
 
 do_build() {
 	_setup_toolchain
 	CCACHE_SLOPPINESS=include_file_mtime ninja -C out/Release ${makejobs} chrome chrome_sandbox chromedriver chrome_crashpad_handler
+
+    # For debuging purposes
+    echo "-> Reticulating splines"
+    ccache -s
 }
 
 do_install() {
