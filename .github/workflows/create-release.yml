@@ -16,12 +16,12 @@ jobs:
       name: release
     steps:
       - name: Fetch repository
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
         with:
           path: master
 
       - name: Fetch void-packages
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
         with:
           repository: void-linux/void-packages
           path: void-packages

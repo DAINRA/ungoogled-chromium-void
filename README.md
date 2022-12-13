@@ -27,7 +27,7 @@ Ungoogled Chromium template and builds for Void Linux, based on the void-package
 Clone and setup the void-packages repository in a work directory and:
 
 ```shell
-git clone --depth=1 //github.com/DAINRA/ungoogled-chromium-void.git
+git clone --depth=1 https://github.com/DAINRA/ungoogled-chromium-void.git
 [[ -d void-packages/srcpkgs/ungoogled-chromium ]] && rm -r void-packages/srcpkgs/ungoogled-chromium
 cp -r ungoogled-chromium-void/void-packages/srcpkgs/ungoogled-chromium void-packages/srcpkgs/
 cd void-packages
@@ -78,7 +78,7 @@ Add the releases page as a repository:
 
 ```shell
 cat << EOF > /etc/xbps.d/20-ungoogled-chromium.conf
-repository=//github.com/DAINRA/ungoogled-chromium-void/releases/latest/download/
+repository=https://github.com/DAINRA/ungoogled-chromium-void/releases/latest/download/
 EOF
 xbps-install -Su ungoogled-chromium
 ```
