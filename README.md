@@ -78,7 +78,7 @@ Add the releases page as a repository:
 
 ```shell
 cat << EOF > /etc/xbps.d/20-ungoogled-chromium.conf
-repository=//github.com/DAINRA/ungoogled-chromium-void/releases/latest/download/
+repository=https://github.com/DAINRA/ungoogled-chromium-void/releases/latest/download/
 EOF
 xbps-install -Su ungoogled-chromium
 ```
