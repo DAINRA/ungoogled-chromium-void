@@ -32,7 +32,7 @@ jobs:
 
       - id: version
         run: |
-          echo "::set-output name=version::$( cat master/version )"
+          echo "version=$( cat master/version )" >> $GITHUB_OUTPUT
 
   Bootstrap:
     needs: [Fetch]
