@@ -1,7 +1,7 @@
 # Template file for 'ungoogled-chromium'
 pkgname=ungoogled-chromium
 # See https://chromiumdash.appspot.com/releases?platform=Linux for the latest version
-version=109.0.5414.74
+version=109.0.5414.119
 revision=1
 archs="i686* x86_64* aarch64* armv7l*"
 hostmakedepends="
@@ -29,8 +29,8 @@ license="BSD-3-Clause"
 homepage="https://github.com/ungoogled-software/ungoogled-chromium"
 distfiles="https://commondatastorage.googleapis.com/chromium-browser-official/chromium-${version}.tar.xz
  ${homepage}/archive/refs/tags/${version}-${revision}.tar.gz"
-checksum="eded233c26ab631be325ad49cb306c338513b6a6528197d42653e66187548e5d
- 2e07a6833ca7531ee5f64c24e31069192256bad5abbe1091ca12802ba2ad3a75"
+checksum="cbcdef5ee71acb53790ded3adef86871812b46e9f208dce8ec3f8ab04958be2d
+ e10fe46f3f4b7058c278ab86c6795cc2b68459bcb7ced5efad3355ab5c2f5de1"
 
 lib32disabled=yes
 
@@ -40,6 +40,10 @@ desc_option_clang="Use clang to build"
 desc_option_debug="Build with debug symbols"
 desc_option_js_optimize="Optimize the JS used for Chromium's UI"
 desc_option_pipewire="Enable support for screen sharing for WebRTC via PipeWire"
+
+if [ "$XBPS_LIBC" = musl ]; then
+	hostmakedepends+=" musl-legacy-compat"
+fi
 
 if [ "$XBPS_TARGET_LIBC" = "musl" ]; then
 	makedepends+=" musl-legacy-compat"
