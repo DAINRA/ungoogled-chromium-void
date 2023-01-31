@@ -96,7 +96,7 @@ jobs:
     runs-on: self-hosted
     steps:
       - name: Cleanup old release files
-        uses: tinoji/delete-older-release-assets@v1.0.1
+        uses: dev-drprasad/delete-older-releases@v0.2.1
         with:
           keep_latest: 5
         env:
