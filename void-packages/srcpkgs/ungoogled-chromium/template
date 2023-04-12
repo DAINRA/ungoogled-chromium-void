@@ -1,11 +1,11 @@
 # Template file for 'ungoogled-chromium'
 pkgname=ungoogled-chromium
 # See https://chromiumdash.appspot.com/releases?platform=Linux for the latest version
-version=111.0.5563.64
+version=112.0.5615.49
 revision=1
 archs="i686* x86_64* aarch64* armv7l*"
 hostmakedepends="
- $(vopt_if clang "clang lld llvm12")
+ $(vopt_if clang "clang lld llvm15")
  $(vopt_if js_optimize openjdk)
  bison git gperf hwids ninja nodejs perl pkg-config python3
  libatomic-devel libepoxy-devel libevent-devel libglib-devel"
@@ -29,8 +29,8 @@ license="BSD-3-Clause"
 homepage="https://github.com/ungoogled-software/ungoogled-chromium"
 distfiles="https://commondatastorage.googleapis.com/chromium-browser-official/chromium-${version}.tar.xz
  ${homepage}/archive/refs/tags/${version}-${revision}.tar.gz"
-checksum="7d5ca0e2bdb22a97713e6bfce74c651006d71aa883056c8e2c2a148039fe4074
- 2ad44997d95ae66b36125bf62bf1308006ec62da26ba04f8b5480d7271675079"
+checksum="ddfd37373c1fa0f433a6ac11f0baa2b1f3fdfb9c7b5867e32a4300f2eb5aff41
+ 9048669535558d2a6cd264539c6588d0218ba2b12950d3ed057ef3ec5fee1baa"
 
 lib32disabled=yes
 
@@ -62,7 +62,7 @@ if [ "$CROSS_BUILD" ]; then
 	 $(vopt_if pipewire pipewire-devel) ffmpeg-devel opus-devel pango-devel libva-devel
 	 libcurl-devel snappy-devel re2-devel libXrandr-devel libXcomposite-devel cups-devel
 	 mit-krb5-devel alsa-lib-devel libXdamage-devel libepoxy-devel
-	 libavif-devel libaom-devel jsoncpp-devel woff2-devel libdav1d-devel"
+	 libavif-devel libaom-devel jsoncpp-devel woff2-devel libdav1d-devel libflac-devel"
 fi
 
 if [ ! "$XBPS_WORDSIZE" = "$XBPS_TARGET_WORDSIZE" ]; then
@@ -76,15 +76,11 @@ if [ "$CROSS_BUILD" ]; then
 	esac
 fi
 
-case "${XBPS_TARGET_MACHINE}" in
-	i686*) broken="https://build.voidlinux.org/builders/i686_builder/builds/40258/steps/shell_3/logs/stdio" ;;
-esac
-
 post_patch() {
 	if [ "$XBPS_TARGET_LIBC" = "musl" ]; then
 		for f in "${FILESDIR}"/musl-patches/*.patch; do
 			echo "Applying $f"
-			patch -Np0 -i "$f"
+			patch -Np1 -i "$f"
 		done
 	fi
 
@@ -217,7 +213,6 @@ do_configure() {
 		"use_lld=$(vopt_if clang true false)"
 		# 'clang_use_chrome_plugins=false'
 		'clang_base_path="/usr"'
-		'use_cxx17=true'
 
 		"gold_path=\"${XBPS_CROSS_BASE}/usr/bin/ld.gold\""
 		'use_custom_libcxx=false'
@@ -320,7 +315,6 @@ do_configure() {
 		'clang_use_chrome_plugins=false'
 		'disable_fieldtrial_testing_config=true'
 		'enable_hangout_services_extension=false'
-		'enable_js_type_check=false'
 		'enable_mdns=false'
 		'enable_mse_mpeg2ts_stream_parser=true'
 		'enable_nacl=false'
