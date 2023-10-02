@@ -88,6 +88,7 @@ jobs:
           files: |
             /repository/binpkgs/ungoogled-chromium-${{ needs.Fetch.outputs.version }}.*.xbps
             /repository/binpkgs/ungoogled-chromium-${{ needs.Fetch.outputs.version }}.*.sig
+            /repository/binpkgs/ungoogled-chromium-${{ needs.Fetch.outputs.version }}.*.sig2
             /repository/binpkgs/*-repodata
           tag_name: ${{ needs.Fetch.outputs.version }}
 
