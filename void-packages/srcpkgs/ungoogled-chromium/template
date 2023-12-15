@@ -1,22 +1,21 @@
 # Template file for 'ungoogled-chromium'
 pkgname=ungoogled-chromium
 # See https://chromiumdash.appspot.com/releases?platform=Linux for the latest version
-version=119.0.6045.105
+version=120.0.6099.109
 revision=1
 archs="i686* x86_64* aarch64* armv7l*"
 hostmakedepends="
  $(vopt_if clang "clang lld llvm15")
  bison git gperf hwids ninja nodejs perl pkg-config python3
- libepoxy-devel libevent-devel libglib-devel
- python3-html5lib python3-BeautifulSoup4 python3-MarkupSafe python3-ply python3-Jinja2"
+ libepoxy-devel libevent-devel libglib-devel"
 makedepends="
  alsa-lib-devel libdav1d-devel brotli-devel cups-devel elfutils-devel ffmpeg-devel
- fontconfig-devel freetype-devel gtk+3-devel jsoncpp-devel libXScrnSaver-devel
+ fontconfig-devel freetype-devel gtk+3-devel libXScrnSaver-devel
  libXcomposite-devel libXcursor-devel libXdamage-devel libXi-devel libXrandr-devel
- libatomic-devel libavif-devel libcap-devel libcurl-devel libdrm-devel libevent-devel
+ libavif-devel libcap-devel libcurl-devel libdrm-devel libevent-devel
  libexif-devel libflac-devel libgcrypt-devel libjpeg-turbo-devel libmtp-devel
  libpng-devel libva-devel libwebp-devel libxml2-devel libxshmfence-devel
- libxslt-devel woff2-devel minizip-devel mit-krb5-devel nss-devel opus-devel
+ libxslt-devel minizip-devel mit-krb5-devel nss-devel opus-devel
  pciutils-devel snappy-devel speech-dispatcher-devel speex-devel
  xcb-proto zlib-devel libaom-devel libffi-devel libevdev-devel
  $(vopt_if pipewire pipewire-devel)
@@ -29,14 +28,15 @@ license="BSD-3-Clause"
 homepage="https://github.com/ungoogled-software/ungoogled-chromium"
 distfiles="https://commondatastorage.googleapis.com/chromium-browser-official/chromium-${version}.tar.xz
  ${homepage}/archive/refs/tags/${version}-${revision}.tar.gz"
-checksum="73cb8c39e928f8c627d747d37a3b020f08913ef5508f893758d70bdbd545dbcf
- e5d74a46cd79b79a3f2f8f8fadce8329ad50f4a4facd76365d28e0761173aa26"
+checksum="87c00c525ee07c2233b78dbece1496b697f686244a67fac2c71e4a30bd96849b
+ 8a54932b0f2098dcd334e79e4f680614f57dc192037bc495d2099e28dbc507c8"
 
 lib32disabled=yes
 
-build_options="clang debug vaapi pulseaudio sndio pipewire"
-build_options_default="clang vaapi pulseaudio pipewire"
+build_options="clang libcxx debug vaapi pulseaudio sndio pipewire"
+build_options_default="clang libcxx vaapi pulseaudio pipewire"
 desc_option_clang="Use clang to build"
+desc_option_libcxx="Use bundled libc++"
 desc_option_debug="Build with debug symbols"
 desc_option_pipewire="Enable support for screen sharing for WebRTC via PipeWire"
 
@@ -48,12 +48,6 @@ if [ "$XBPS_TARGET_LIBC" = "musl" ]; then
 	makedepends+=" musl-legacy-compat"
 fi
 
-post_extract() {
-	echo "-> Aligning Covariance Matrices"
-	shopt -s dotglob
-	mv chromium-${version}/* .
-}
-
 if [ "$CROSS_BUILD" ]; then
 	hostmakedepends+=" libX11-devel libxcb-devel pciutils-devel libXext-devel libglvnd-devel
 	 libjpeg-turbo-devel libXi-devel nss-devel libpng-devel libwebp-devel
@@ -61,7 +55,7 @@ if [ "$CROSS_BUILD" ]; then
 	 $(vopt_if pipewire pipewire-devel) ffmpeg-devel opus-devel pango-devel libva-devel
 	 libcurl-devel snappy-devel libXrandr-devel libXcomposite-devel cups-devel
 	 mit-krb5-devel alsa-lib-devel libXdamage-devel libepoxy-devel libevdev-devel
-	 libavif-devel libaom-devel jsoncpp-devel woff2-devel libdav1d-devel libflac-devel
+	 libavif-devel libaom-devel libdav1d-devel libflac-devel
 	 libdrm-devel libgbm-devel"
 fi
 
@@ -71,10 +65,23 @@ fi
 
 if [ "$CROSS_BUILD" ]; then
 	case "${XBPS_TARGET_MACHINE}" in
+		aarch64)
+		broken="https://build.voidlinux.org/builders/aarch64_builder/builds/46556/steps/shell_3/logs/stdio" ;;
 		aarch64*) ;;
 		*) nocross="chromium can not be cross compiled for this architecture" ;;
 	esac
 fi
+
+case "${XBPS_TARGET_MACHINE}" in
+	aarch64)
+		broken="https://build.voidlinux.org/builders/aarch64_builder/builds/46556/steps/shell_3/logs/stdio" ;;
+esac
+
+post_extract() {
+	echo "-> Aligning Covariance Matrices"
+	shopt -s dotglob
+	mv chromium-${version}/* .
+}
 
 post_patch() {
 	if [ "$XBPS_TARGET_LIBC" = "musl" ]; then
@@ -92,6 +99,9 @@ post_patch() {
 	vsed -i 's/OFFICIAL_BUILD/GOOGLE_CHROME_BUILD/' \
 		tools/generate_shim_headers/generate_shim_headers.py
 
+	mkdir -p third_party/node/linux/node-linux-x64/bin
+	ln -s /usr/bin/node third_party/node/linux/node-linux-x64/bin/
+
 	# Ungoogled Chromium prune, patch, domain substitution
 	echo "-> Applying Feng Shui Shaders"
 	local UCDIR=${pkgname}-${version}-${revision}
@@ -101,10 +111,6 @@ post_patch() {
 	$UCDIR/utils/patches.py apply . $UCDIR/patches
 	echo "-> Calculating Llama Expectoration Trajectory"
 	$UCDIR/utils/domain_substitution.py apply -r $UCDIR/domain_regex.list -f $UCDIR/domain_substitution.list -c build/domsubcache.tar.gz .
-
-	# Apply patches that interfere with Ungoogled Chromium patching process
-	echo "-> Exposing Flash Variables to Streak System"
-	if [ "$build_option_sndio" ]; then patch -Np1 -i ${FILESDIR}/sndio.patch; fi
 }
 
 _setup_clang() {
@@ -123,7 +129,7 @@ _setup_clang() {
 	export BUILD_NM=llvm-nm
 	export BUILD_CFLAGS="-Wno-unknown-warning-option"
 	export BUILD_CXXFLAGS="-Wno-unknown-warning-option"
-	if [ "$CROSS_BUILD" ]; then
+	if [[ -n "$CROSS_BUILD" && -z "$build_option_libcxx" ]]; then
 		CFLAGS+=" --gcc-toolchain=/usr"
 		CFLAGS+=" --sysroot=${XBPS_CROSS_BASE}"
 		CFLAGS+=" -nostdinc"
@@ -167,6 +173,8 @@ do_configure() {
 	# use_system_v8=1
 	# bzip2 xdg_utils speex
 	# XXX: harfbuzz-ng use builtin one until system-wide is updated >=3.0.0
+	# libcxx https://github.com/llvm/llvm-project/issues/61705:
+	# snappy
 	system="
 		ffmpeg
 		flac
@@ -180,7 +188,6 @@ do_configure() {
 		libxml
 		libxslt
 		opus
-		snappy
 	"
 
 	# remove build scripts for system provided dependencies - basically does the
@@ -202,7 +209,6 @@ do_configure() {
 	third_party/libaddressinput/chromium/tools/update-strings.py
 
 	conf=(
-		# 'enable_nacl=false'
 		'enable_rust=false'
 
 		'use_sysroot=false'
@@ -211,11 +217,10 @@ do_configure() {
 
 		"is_clang=$(vopt_if clang true false)"
 		"use_lld=$(vopt_if clang true false)"
-		# 'clang_use_chrome_plugins=false'
 		'clang_base_path="/usr"'
 
 		"gold_path=\"${XBPS_CROSS_BASE}/usr/bin/ld.gold\""
-		'use_custom_libcxx=false'
+		"use_custom_libcxx=$(vopt_if libcxx true false)" # https://github.com/llvm/llvm-project/issues/61705
 		'use_gold=false'
 
 		'rust_sysroot_absolute="/usr"'
@@ -227,9 +232,6 @@ do_configure() {
 		"symbol_level=$(vopt_if debug 1 0)"
 
 		'icu_use_data_file=true'
-
-		# 'enable_widevine=true'
-		# 'enable_hangout_services_extension=true'
 
 		'use_system_harfbuzz=false'
 		'use_system_libffi=true'
@@ -245,7 +247,7 @@ do_configure() {
 
 		"rtc_use_pipewire=$(vopt_if pipewire true false)"
 
-		# "use_sndio=$(vopt_if sndio true false)"
+		"use_sndio=$(vopt_if sndio true false)"
 
 		# Always support proprietary codecs.
 		# Enable H.264 support in bundled ffmpeg.
@@ -255,12 +257,10 @@ do_configure() {
 		# Make sure that -Werror doesn't get added to CFLAGS by the build system.
 		# Depending on GCC version the warnings are different and we don't want
 		# the build to fail because of that.
-		# 'treat_warnings_as_errors=false'
 		'fatal_linker_warnings=false'
 
 		# Save space by removing DLOG and DCHECK messages (about 6% reduction).
 		# 'logging_like_official_build=true'
-		# 'disable_fieldtrial_testing_config=true'
 
 		'is_official_build=true'
 
@@ -268,7 +268,28 @@ do_configure() {
 		'is_cfi=false'
 		'use_thin_lto=false'
 		'use_cfi_icall=false'
-		# 'chrome_pgo_phase=0'
+
+		# Ungoogled Chromium flags.gn
+		'build_with_tflite_lib=false'
+		'chrome_pgo_phase=0'
+		'clang_use_chrome_plugins=false'
+		'disable_fieldtrial_testing_config=true'
+		'enable_hangout_services_extension=false'
+		'enable_mdns=false'
+		'enable_nacl=false'
+		'enable_reading_list=false'
+		'enable_remoting=false'
+		'enable_reporting=false'
+		'enable_service_discovery=false'
+		'enable_widevine=true'
+		'exclude_unwind_tables=true'
+		'google_api_key=""'
+		'google_default_client_id=""'
+		'google_default_client_secret=""'
+		'safe_browsing_mode=0'
+		'treat_warnings_as_errors=false'
+		'use_official_google_api_keys=false'
+		'use_unofficial_version_number=false'
 	)
 
 	if [ "$CROSS_BUILD" ]; then
@@ -303,58 +324,13 @@ do_configure() {
 			aarch64*) conf+=( 'host_cpu="arm64"' ) ;;
 		esac
 	fi
-
-	# Ungoogled Chromium flags.gn
-	conf+=(
-		'build_with_tflite_lib=false'
-		'chrome_pgo_phase=0'
-		'clang_use_chrome_plugins=false'
-		'disable_fieldtrial_testing_config=true'
-		'enable_hangout_services_extension=false'
-		'enable_mdns=false'
-		'enable_mse_mpeg2ts_stream_parser=true'
-		'enable_nacl=false'
-		'enable_reading_list=false'
-		'enable_remoting=false'
-		'enable_reporting=false'
-		'enable_service_discovery=false'
-		'enable_widevine=true'
-		'exclude_unwind_tables=true'
-		'google_api_key=""'
-		'google_default_client_id=""'
-		'google_default_client_secret=""'
-		'safe_browsing_mode=0'
-		'treat_warnings_as_errors=false'
-		'use_official_google_api_keys=false'
-		'use_unofficial_version_number=false'
-	)
-
-	# Check if sndio was specified as a build option
-	if [ "$build_option_sndio" ]; then conf+=( 'use_sndio=true' ); fi
-
 	_setup_toolchain
-
-	# Facilitate deterministic builds (taken from build/config/compiler/BUILD.gn)
-	# https://github.com/archlinux/svntogit-packages/blob/packages/chromium/trunk/PKGBUILD
-	export CPPFLAGS
-	CFLAGS+=" -Wno-builtin-macro-redefined"
-	CXXFLAGS+=" -Wno-builtin-macro-redefined"
-	CPPFLAGS+=" -D__DATE__=  -D__TIME__=  -D__TIMESTAMP__="
-
 	out/Release/gn gen out/Release --args="${conf[*]}"
-
-	# For debuging purposes
-	echo "-> Reticulating splines"
-	out/Release/gn args --list out/Release
 }
 
 do_build() {
 	_setup_toolchain
 	CCACHE_SLOPPINESS=include_file_mtime ninja -C out/Release ${makejobs} chrome chrome_sandbox chromedriver chrome_crashpad_handler
-
-	# For debuging purposes
-	echo "-> Reticulating splines"
-	ccache -s
 }
 
 do_install() {
@@ -373,8 +349,6 @@ do_install() {
 	vmkdir usr/lib/${pkgname}/locales
 	vcopy "out/Release/locales/*.pak" usr/lib/${pkgname}/locales
 
-	vinstall ${FILESDIR}/chromium.desktop 644 usr/share/applications ${pkgname}.desktop
-
 	vinstall out/Release/icudtl.dat 0644 usr/lib/${pkgname}
 
 	for size in 24 48 64 128 256; do
@@ -391,4 +365,14 @@ do_install() {
 	vbin ${FILESDIR}/chromium.sh ${pkgname}
 	vlicense LICENSE
 	ln -sf /usr/lib/${pkgname}/chromedriver ${DESTDIR}/usr/bin/chromedriver
+
+	vinstall chrome/installer/linux/common/desktop.template 644 usr/share/applications ${pkgname}.desktop
+	vman chrome/app/resources/manpage.1.in ${pkgname}.1
+
+	sed -i \
+		-e 's/@@MENUNAME@@/Ungoogled-Chromium/g' \
+		-e 's/@@PACKAGE@@/ungoogled-chromium/g' \
+		-e 's/@@USR_BIN_SYMLINK_NAME@@/ungoogled-chromium/g' \
+		${DESTDIR}/usr/share/man/man1/${pkgname}.1 \
+		${DESTDIR}/usr/share/applications/${pkgname}.desktop
 }
