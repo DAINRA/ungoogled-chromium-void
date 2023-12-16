@@ -37,21 +37,16 @@ cd void-packages
 ## Binary release
 
 ```shell
-./xbps-src show-options ungoogled-chromium
-=> ungoogled-chromium-x.x.x.x_x: the following build options are set:
+./xbps-src show-options ungoogled-chromium                                                                                                                                                                                                                   adrian@TS-P320
+=> ungoogled-chromium-120.0.6099.109_1: the following build options are set:
    clang: Use clang to build (ON)
+   libcxx: Use bundled libc++ (ON)
    pipewire: Enable support for screen sharing for WebRTC via PipeWire (ON)
    pulseaudio: Enable support for the PulseAudio sound server (ON)
    vaapi: Enable support for VA-API (ON)
    debug: Build with debug symbols (OFF)
-   js_optimize: Optimize the JS used for Chromium's UI (OFF)
    sndio: Enable support for the sndio sound server (OFF)
 ```
-
-- `js_optimized` disabled as per [enable_js_type_check=false][3].
-- `sndio` is disabled (same as the void-linux build) and `sndio.patch` is moved to the files directory.  
-  If the option is enabled, it is applied at the end of the patching stage, otherwise it causes patching to fail.
-- [remove-strip_binary.patch][4] removed since it is already included in [fix-building-with-prunned-binaries.patch][5].
 
 ### Available builds
 
@@ -88,8 +83,8 @@ First `xbps-install -S` run it will ask to import the repository key, same as [8
 ## Troubleshooting
 
 - Although it is not included in the run dependencies, `gtk+3` package must be installed.
-- To enable VAAPI add `--enable-features=VaapiVideoDecoder` to `CHROME_FLAGS` [environment variable][6].  
-  More info [vaapi.md][7]. Also check [Void Handbook][8] in case of problems.
+- To enable VAAPI add `--enable-features=VaapiVideoDecoder` to `CHROME_FLAGS` [environment variable][3].  
+  More info [vaapi.md][4]. Also check [Void Handbook][5] in case of problems.
 - For VAAPI `--disable-features=UseChromeOSDirectVideoDecoder` might also be needed.  
   Check in `chrome://gpu` if `Video Decode: Hardware accelerated`.
 
@@ -101,10 +96,10 @@ First `xbps-install -S` run it will ask to import the repository key, same as [8
 
 ### General tweaks
 
-- Lower ram usage: `--renderer-process-limit=2` [renderer-process-limit][9].
-- Reduce disk activity: `--disk-cache-size=1 --v8-cache-options=none` [disk-cache-size][10], [v8-cache-options][11].
+- Lower ram usage: `--renderer-process-limit=2` [renderer-process-limit][6].
+- Reduce disk activity: `--disk-cache-size=1 --v8-cache-options=none` [disk-cache-size][7], [v8-cache-options][8].
 - Dark Mode: `chrome://flags/#enable-force-dark`.
-- Global media controls can cause crashes either by opening or closing it, as described in this [issue][12].  
+- Global media controls can cause crashes either by opening or closing it, as described in this [issue][9].  
   Either avoid using the feature or disable it completely (`--disable-features=GlobalMediaControls`).
 
 ## Credits
@@ -117,13 +112,10 @@ First `xbps-install -S` run it will ask to import the repository key, same as [8
 [2]:  //github.com/void-linux/void-packages/#readme
 [2a]: //github.com/void-linux/void-packages/#quick-start
 [2b]: //github.com/void-linux/void-packages/#building-for-musl
-[3]:  //github.com/ungoogled-software/ungoogled-chromium/blob/master/flags.gn
-[4]:  //github.com/void-linux/void-packages/blob/master/srcpkgs/chromium/patches/remove-strip_binary.patch
-[5]:  //github.com/ungoogled-software/ungoogled-chromium/blob/master/patches/core/ungoogled-chromium/fix-building-with-prunned-binaries.patch
-[6]:  //wiki.archlinux.org/title/Environment_variables
-[7]:  //chromium.googlesource.com/chromium/src/+/refs/heads/main/docs/gpu/vaapi.md
-[8]:  //docs.voidlinux.org/config/graphical-session/graphics-drivers/intel.html
-[9]:  //peter.sh/experiments/chromium-command-line-switches/#renderer-process-limit
-[10]: //peter.sh/experiments/chromium-command-line-switches/#disk-cache-size
-[11]: //peter.sh/experiments/chromium-command-line-switches/#v8-cache-options
-[12]: //bugs.chromium.org/p/chromium/issues/detail?id=1314342
+[3]:  //wiki.archlinux.org/title/Environment_variables
+[4]:  //chromium.googlesource.com/chromium/src/+/refs/heads/main/docs/gpu/vaapi.md
+[5]:  //docs.voidlinux.org/config/graphical-session/graphics-drivers/intel.html
+[6]:  //peter.sh/experiments/chromium-command-line-switches/#renderer-process-limit
+[7]: //peter.sh/experiments/chromium-command-line-switches/#disk-cache-size
+[8]: //peter.sh/experiments/chromium-command-line-switches/#v8-cache-options
+[9]: //bugs.chromium.org/p/chromium/issues/detail?id=1314342
