@@ -45,7 +45,7 @@ jobs:
       - name: Bootstrap ${{ matrix.arch }}
         run: |
           cd void-packages
-          ./xbps-src -H /repository -m masterdir-${{ matrix.arch }} binary-bootstrap ${{ matrix.arch }}
+          ./xbps-src -H /repository -m masterdir-${{ matrix.arch }} binary-bootstrap -A ${{ matrix.arch }}
           ./xbps-src -H /repository -m masterdir-${{ matrix.arch }} fetch ungoogled-chromium
 
   Build:
