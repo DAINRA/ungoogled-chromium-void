@@ -16,12 +16,12 @@ jobs:
       name: release
     steps:
       - name: Fetch repository
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           path: master
 
       - name: Fetch void-packages
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           repository: void-linux/void-packages
           path: void-packages
@@ -45,8 +45,8 @@ jobs:
       - name: Bootstrap ${{ matrix.arch }}
         run: |
           cd void-packages
-          ./xbps-src -H /repository -m masterdir-${{ matrix.arch }} binary-bootstrap -A ${{ matrix.arch }}
-          ./xbps-src -H /repository -m masterdir-${{ matrix.arch }} fetch ungoogled-chromium
+          ./xbps-src -H /repository -A ${{ matrix.arch }} binary-bootstrap
+          ./xbps-src -H /repository -A ${{ matrix.arch }} fetch ungoogled-chromium
 
   Build:
     needs: [Fetch, Bootstrap]
@@ -62,7 +62,7 @@ jobs:
       - name: Build ${{ matrix.arch }}
         run: |
           cd void-packages
-          ./xbps-src -H /repository -m masterdir-${{ matrix.arch }} -C pkg ungoogled-chromium
+          ./xbps-src -H /repository -A ${{ matrix.arch }} -C pkg ungoogled-chromium
       - name: Sign ${{ matrix.arch }} package
         run: |
           cd /repository/binpkgs
@@ -82,7 +82,7 @@ jobs:
           cat ${{ github.workspace }}/void-packages/sum | sha256sum -c
 
       - name: Publish
-        uses: softprops/action-gh-release@v1
+        uses: softprops/action-gh-release@4634c16e79c963813287e889244c50009e7f0981
         with:
           body_path: ${{ github.workspace }}/void-packages/sum
           files: |
@@ -97,7 +97,7 @@ jobs:
     runs-on: self-hosted
     steps:
       - name: Cleanup old release files
-        uses: dev-drprasad/delete-older-releases@v0.2.1
+        uses: dev-drprasad/delete-older-releases@v0.3.2
         with:
           keep_latest: 5
         env:
