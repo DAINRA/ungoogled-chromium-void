@@ -1,13 +1,13 @@
 # Template file for 'ungoogled-chromium'
 pkgname=ungoogled-chromium
 # See https://chromiumdash.appspot.com/releases?platform=Linux for the latest version
-version=126.0.6478.182
+version=127.0.6533.72
 revision=1
 archs="i686* x86_64* aarch64* armv7l*"
 hostmakedepends="
  $(vopt_if clang "clang17 lld17 llvm17 compiler-rt")
  bison git gperf hwids ninja nodejs perl pkg-config python3
- libepoxy-devel libevent-devel libglib-devel rust"
+ libepoxy-devel libevent-devel libglib-devel rust rust-bindgen"
 makedepends="
  alsa-lib-devel libdav1d-devel brotli-devel cups-devel elfutils-devel
  fontconfig-devel freetype-devel gtk+3-devel libXScrnSaver-devel
@@ -29,8 +29,8 @@ license="BSD-3-Clause"
 homepage="https://github.com/ungoogled-software/ungoogled-chromium"
 distfiles="https://commondatastorage.googleapis.com/chromium-browser-official/chromium-${version}.tar.xz
  ${homepage}/archive/refs/tags/${version}-${revision}.tar.gz"
-checksum="3939f5b3116ebd3cb15ff8c7059888f6b00f4cfa8a77bde983ee4ce5d0eea427
- 3d44e2ed7ac159c4f5a0205750469ae2cff5b25772d316b94799cee5f1f02c07"
+checksum="7f21f1bfc89e1a2c474463ef950b72e6401d1375cf3c17d907bf3d346720efbe
+ 45ce5780948b1348c21b23efbc93a78ec2b706a469856a7d0e4c9afbfaea601e"
 
 lib32disabled=yes
 
@@ -93,6 +93,7 @@ post_patch() {
 		tools/generate_shim_headers/generate_shim_headers.py
 
 	mkdir -p third_party/node/linux/node-linux-x64/bin
+	rm -f third_party/node/linux/node-linux-x64/bin/node
 	ln -s /usr/bin/node third_party/node/linux/node-linux-x64/bin/
 
 	# Ungoogled Chromium prune, patch, domain substitution
@@ -219,12 +220,11 @@ do_configure() {
 		'clang_base_path="/usr"'
 		"clang_version=\"${clang_version%%.*}\""
 
-		"gold_path=\"${XBPS_CROSS_BASE}/usr/bin/ld.gold\""
 		"use_custom_libcxx=$(vopt_if libcxx true false)" # https://github.com/llvm/llvm-project/issues/61705
-		'use_gold=false'
 
 		'enable_rust=true'
 		'rust_sysroot_absolute="/usr"'
+		'rust_bindgen_root="/usr"'
 		"rustc_version=\"$(rustc --version)\""
 
 		# is_debug makes the build a debug build, changes some things.
