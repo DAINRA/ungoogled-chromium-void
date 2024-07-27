@@ -92,10 +92,6 @@ post_patch() {
 	vsed -i 's/OFFICIAL_BUILD/GOOGLE_CHROME_BUILD/' \
 		tools/generate_shim_headers/generate_shim_headers.py
 
-	mkdir -p third_party/node/linux/node-linux-x64/bin
-	rm -f third_party/node/linux/node-linux-x64/bin/node
-	ln -s /usr/bin/node third_party/node/linux/node-linux-x64/bin/
-
 	# Ungoogled Chromium prune, patch, domain substitution
 	msg_normal "Applying Feng Shui Shaders ...\n"
 	local ucdir="../${pkgname}-${version}-${revision}"
@@ -105,6 +101,10 @@ post_patch() {
 	$ucdir/utils/patches.py apply . $ucdir/patches
 	msg_normal "Calculating Llama Expectoration Trajectory ...\n"
 	$ucdir/utils/domain_substitution.py apply -r $ucdir/domain_regex.list -f $ucdir/domain_substitution.list -c build/domsubcache.tar.gz .
+
+	mkdir -p third_party/node/linux/node-linux-x64/bin
+	rm -f third_party/node/linux/node-linux-x64/bin/node
+	ln -s /usr/bin/node third_party/node/linux/node-linux-x64/bin/
 }
 
 _setup_clang() {
