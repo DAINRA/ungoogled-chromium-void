@@ -1,7 +1,7 @@
 # Template file for 'ungoogled-chromium'
 pkgname=ungoogled-chromium
 # See https://chromiumdash.appspot.com/releases?platform=Linux for the latest version
-version=127.0.6533.72
+version=127.0.6533.88
 revision=1
 archs="i686* x86_64* aarch64* armv7l*"
 hostmakedepends="
@@ -29,8 +29,8 @@ license="BSD-3-Clause"
 homepage="https://github.com/ungoogled-software/ungoogled-chromium"
 distfiles="https://commondatastorage.googleapis.com/chromium-browser-official/chromium-${version}.tar.xz
  ${homepage}/archive/refs/tags/${version}-${revision}.tar.gz"
-checksum="7f21f1bfc89e1a2c474463ef950b72e6401d1375cf3c17d907bf3d346720efbe
- 45ce5780948b1348c21b23efbc93a78ec2b706a469856a7d0e4c9afbfaea601e"
+checksum="fd8e2bec6aee113388e2ac269538f9e621a21c449aca925ba7d709c12a9f93a5
+ d48dc832e53ac37b623162088788583ca3e8bf4eefc565334b7b59da1ffc30eb"
 
 lib32disabled=yes
 
