@@ -1,11 +1,11 @@
 # Template file for 'ungoogled-chromium'
 pkgname=ungoogled-chromium
 # See https://chromiumdash.appspot.com/releases?platform=Linux for the latest version
-version=127.0.6533.119
+version=128.0.6613.84
 revision=1
 archs="i686* x86_64* aarch64* armv7l*"
 hostmakedepends="
- $(vopt_if clang "clang17 lld17 llvm17 compiler-rt")
+ $(vopt_if clang "clang18 lld18 llvm18 compiler-rt")
  bison git gperf hwids ninja nodejs perl pkg-config python3
  libepoxy-devel libevent-devel libglib-devel rust rust-bindgen"
 makedepends="
@@ -29,8 +29,8 @@ license="BSD-3-Clause"
 homepage="https://github.com/ungoogled-software/ungoogled-chromium"
 distfiles="https://commondatastorage.googleapis.com/chromium-browser-official/chromium-${version}.tar.xz
  ${homepage}/archive/refs/tags/${version}-${revision}.tar.gz"
-checksum="acc9e3f9fd2d180b8831865a1ac4f5cdd9ffe6211f47f467296d9ee1be2a577e
- f268daae9f1514cdc907e5e10c500f03a14b4ec21414d7ac603919a8badba290"
+checksum="9297c1e1dc9310534f6a48f90eacc2eac1d964ac3c827dc0798594e8a2742dc4
+ a6898d0cf47025126a8795947397ee35a10a623fdbe0c8616c1dfcca51ebe500"
 
 lib32disabled=yes
 
