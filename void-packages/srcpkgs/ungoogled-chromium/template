@@ -1,7 +1,7 @@
 # Template file for 'ungoogled-chromium'
 pkgname=ungoogled-chromium
 # See https://chromiumdash.appspot.com/releases?platform=Linux for the latest version
-version=128.0.6613.137
+version=129.0.6668.58
 revision=1
 archs="i686* x86_64* aarch64* armv7l*"
 hostmakedepends="
@@ -29,8 +29,8 @@ license="BSD-3-Clause"
 homepage="https://github.com/ungoogled-software/ungoogled-chromium"
 distfiles="https://commondatastorage.googleapis.com/chromium-browser-official/chromium-${version}.tar.xz
  ${homepage}/archive/refs/tags/${version}-${revision}.tar.gz"
-checksum="e1d39c170dfdc2627a7b003e11d77f04a578b8e1cfe41e714cdaa345c91f4943
- 94e2f80f72b1c0f791c826c734a676cd0cb60ebaaf2a8a4941a8475a15f5508d"
+checksum="eaf850183d32627ce0cde9f3d3f853bc11c217ef7f41540303214ed47803d96d
+ a52872325dcf1121acbabec781edfabe068a50a9080e81e69b249dd6301f2eac"
 
 lib32disabled=yes
 
@@ -38,13 +38,14 @@ create_wrksrc=yes
 build_wrksrc="chromium-${version}"
 patch_args="-d ${build_wrksrc} -Np1"
 
-build_options="clang libcxx debug vaapi pulseaudio sndio pipewire lto"
+build_options="clang libcxx debug vaapi pulseaudio sndio pipewire lto drumbrake"
 build_options_default="clang libcxx vaapi pulseaudio pipewire"
 desc_option_clang="Use clang to build"
 desc_option_libcxx="Use bundled libc++"
 desc_option_debug="Build with debug symbols"
 desc_option_lto="Enable Link Time Optimization"
 desc_option_pipewire="Enable support for screen sharing for WebRTC via PipeWire"
+desc_option_drumbrake="WebAssembly Interpreter"
 
 if [ "$XBPS_LIBC" = musl ]; then
 	hostmakedepends+=" musl-legacy-compat"
@@ -53,6 +54,10 @@ fi
 if [ "$XBPS_TARGET_LIBC" = "musl" ]; then
 	makedepends+=" musl-legacy-compat"
 fi
+
+case "$XBPS_TARGET_MACHINE" in
+	x86_64-musl|aarch64-musl) build_options_default+=" drumbrake";;
+esac
 
 if [ "$CROSS_BUILD" ]; then
 	hostmakedepends+=" libX11-devel libxcb-devel pciutils-devel libXext-devel libglvnd-devel
@@ -253,6 +258,8 @@ do_configure() {
 		"rtc_use_pipewire=$(vopt_if pipewire true false)"
 
 		"use_sndio=$(vopt_if sndio true false)"
+
+		"v8_enable_drumbrake=$(vopt_if drumbrake true false)"
 
 		# Always support proprietary codecs.
 		# Enable H.264 support in bundled ffmpeg.
