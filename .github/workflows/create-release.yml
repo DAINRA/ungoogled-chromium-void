@@ -62,7 +62,7 @@ jobs:
       - name: Build ${{ matrix.arch }}
         run: |
           cd void-packages
-          ./xbps-src -H /repository -A ${{ matrix.arch }} -C pkg ungoogled-chromium
+          ./xbps-src -H /repository -A ${{ matrix.arch }} -o debug -C pkg ungoogled-chromium
       - name: Sign ${{ matrix.arch }} package
         run: |
           cd /repository/binpkgs
