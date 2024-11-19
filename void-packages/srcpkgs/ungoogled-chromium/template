@@ -182,7 +182,7 @@ do_configure() {
 	system=(
 		flac
 		fontconfig
-		freetype
+		# freetype
 		libdrm
 		libevent
 		libjpeg
