@@ -5,7 +5,7 @@ version=131.0.6778.85
 revision=1
 archs="i686* x86_64* aarch64* armv7l*"
 hostmakedepends="
- $(vopt_if clang "clang18 lld18 llvm18 compiler-rt")
+ $(vopt_if clang "clang${_llvmver} lld${_llvmver} llvm${_llvmver} compiler-rt${_llvmver}")
  bison git gperf hwids ninja nodejs perl pkg-config python3
  libepoxy-devel libevent-devel libglib-devel rust rust-bindgen
  gn"
@@ -181,7 +181,7 @@ do_configure() {
 	system=(
 		flac
 		fontconfig
-		# freetype
+		freetype
 		libdrm
 		libevent
 		libjpeg
