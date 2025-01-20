@@ -3,21 +3,6 @@ Ungoogled Chromium template and builds for Void Linux, based on the void-package
 
 ![GitHub release (latest by date)](https://img.shields.io/github/v/release/DAINRA/ungoogled-chromium-void?style=flat-square)
 
-> **Note**
->
-> Due to a rather stupid mistake on my part (wiping my ssd clean with no backup :c) the signing key for the ropository will have to be changed.
->
-> The new key 91:aa:05:51:81:3f:38:b6:6a:74:af:3f:40:2d:08:c3.plist will be imported on the first update.
->
-> To cleanup the old key remove:
->
-> the file: /var/db/xbps/keys/88:ac:8f:99:4d:b0:20:8f:6b:f0:8f:49:b9:13:fb:17.plist
->
-> and
->
-> the directory: /var/db/xbps/https___github_com_DAINRA_ungoogled-chromium-void_releases_latest_download_
->
-
 ## Content Overview
 
 - [**Building from sources**](#building-from-source)
