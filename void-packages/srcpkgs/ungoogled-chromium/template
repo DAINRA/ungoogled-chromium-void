@@ -1,19 +1,20 @@
 # Template file for 'ungoogled-chromium'
 pkgname=ungoogled-chromium
 # See https://chromiumdash.appspot.com/releases?platform=Linux for the latest version
-version=132.0.6834.110
+version=133.0.6943.53
 revision=1
 archs="i686* x86_64* aarch64* armv7l*"
+_llvmver=19
 hostmakedepends="
  $(vopt_if clang "clang${_llvmver} lld${_llvmver} llvm${_llvmver} compiler-rt${_llvmver}")
  bison git gperf hwids ninja nodejs perl pkg-config python3
- libepoxy-devel libevent-devel libglib-devel rust rust-bindgen
+ libepoxy-devel libglib-devel rust rust-bindgen
  gn"
 makedepends="
  alsa-lib-devel libdav1d-devel brotli-devel cups-devel elfutils-devel
  fontconfig-devel freetype-devel gtk+3-devel libXScrnSaver-devel
  libXcomposite-devel libXcursor-devel libXdamage-devel libXi-devel libXrandr-devel
- libavif-devel libcap-devel libcurl-devel libdrm-devel libevent-devel
+ libavif-devel libcap-devel libcurl-devel libdrm-devel
  libexif-devel libflac-devel libgcrypt-devel libjpeg-turbo-devel libmtp-devel
  libpng-devel libva-devel libwebp-devel libxml2-devel libxshmfence-devel
  libxslt-devel minizip-devel mit-krb5-devel nss-devel opus-devel
@@ -30,8 +31,8 @@ license="BSD-3-Clause"
 homepage="https://github.com/ungoogled-software/ungoogled-chromium"
 distfiles="https://commondatastorage.googleapis.com/chromium-browser-official/chromium-${version}.tar.xz
  ${homepage}/archive/refs/tags/${version}-${revision}.tar.gz"
-checksum="e18a1c9575371c9e0511798bac52fd682456f507081bfefd013c58b8d13e52a9
- bb1b2cc70cf1f737511b187afa4c626f26270a9eafc46434f4c9fe987e9d5314"
+checksum="433c8891a3d717994b0e9544334491888e835a4b813354eefacae05489c23d01
+ 5464edaba040a339846e18f9c6dfa7f95f653e48eb2623e80b23c2bf4520e7c0"
 
 lib32disabled=yes
 
@@ -183,7 +184,6 @@ do_configure() {
 		fontconfig
 		freetype
 		libdrm
-		libevent
 		libjpeg
 		libpng
 		libwebp
