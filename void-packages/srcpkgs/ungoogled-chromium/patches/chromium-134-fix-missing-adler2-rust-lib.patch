@@ -1,0 +1,11 @@
+--- build/rust/std/BUILD.gn
++++ build/rust/std/BUILD.gn
+@@ -89,7 +89,7 @@
+     # These are no longer present in the Windows toolchain.
+     stdlib_files += [
+       "addr2line",
+-      "adler2",
++      "adler",
+       "gimli",
+       "libc",
+       "memchr",
