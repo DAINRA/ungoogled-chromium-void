@@ -1,0 +1,14 @@
+--- build/toolchain/rbe.gni.orig	2025-04-03 01:47:13.651878329 +0200
++++ build/toolchain/rbe.gni	2025-04-03 01:47:49.568142573 +0200
+@@ -28,10 +28,7 @@
+ }
+ 
+ use_reclient_default = false
+-if (Path_Exists(rebase_path(".reproxy_tmp", ".", root_build_dir))) {
+-  # Use reclient if build dir used reclient before (.reproxy_tmp exists).
+-  use_reclient_default = true
+-} else if (use_remoteexec) {
++if (use_remoteexec) {
+   if (use_siso) {
+     use_reclient_default = use_reclient_on_siso
+   } else {
