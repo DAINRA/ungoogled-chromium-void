@@ -20,6 +20,11 @@ jobs:
         with:
           path: master
 
+      - name: Setup node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
       - name: Fetch void-packages
         uses: actions/checkout@v4
         with:
