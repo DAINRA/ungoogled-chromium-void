@@ -245,6 +245,8 @@ do_configure() {
 		'use_system_harfbuzz=false'
 		'use_system_libffi=true'
 
+		'clang_warning_suppression_file=""'
+
 		'use_qt=false'
 
 		'use_cups=true'
