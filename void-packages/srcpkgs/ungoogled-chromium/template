@@ -338,13 +338,14 @@ do_build() {
 	export RUSTC_BOOTSTRAP=1
 
 	_setup_toolchain
-	CCACHE_SLOPPINESS=include_file_mtime ninja -C out/Release ${makejobs} chrome chromedriver.unstripped chrome_crashpad_handler
+	CCACHE_SLOPPINESS=include_file_mtime ninja -C out/Release ${makejobs} chrome chrome_sandbox chromedriver chrome_crashpad_handler
 }
 
 do_install() {
 	vinstall out/Release/chrome 755 usr/lib/${pkgname} ${pkgname}
+	vinstall out/Release/chrome_sandbox 4755 usr/lib/${pkgname} chrome-sandbox
 	vinstall out/Release/chrome_crashpad_handler 755 usr/lib/${pkgname} chrome_crashpad_handler
-	vinstall out/Release/chromedriver.unstripped 755 usr/lib/${pkgname} chromedriver
+	vinstall out/Release/chromedriver 755 usr/lib/${pkgname} chromedriver
 	vinstall out/Release/libEGL.so 755 usr/lib/${pkgname} libEGL.so
 	vinstall out/Release/libGLESv2.so 755 usr/lib/${pkgname} libGLESv2.so
 	vinstall out/Release/libvk_swiftshader.so 755 usr/lib/${pkgname} libvk_swiftshader.so
