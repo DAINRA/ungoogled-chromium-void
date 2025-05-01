@@ -7,7 +7,7 @@ archs="i686* x86_64* aarch64* armv7l*"
 _llvmver=19
 hostmakedepends="
  $(vopt_if clang "clang${_llvmver} lld${_llvmver} llvm${_llvmver} compiler-rt${_llvmver}")
- bison git gperf hwids ninja nodejs perl pkg-config python3
+ bison git gperf hwids ninja perl pkg-config python3
  libepoxy-devel libglib-devel rust rust-bindgen
  gn"
 makedepends="
