@@ -20,7 +20,7 @@ makedepends="
  libxslt-devel minizip-devel mit-krb5-devel nss-devel opus-devel
  pciutils-devel snappy-devel speech-dispatcher-devel speex-devel
  xcb-proto zlib-devel libaom-devel libffi-devel libevdev-devel
- compiler-rt
+ compiler-rt${_llvmver} rust-std
  $(vopt_if pipewire pipewire-devel)
  $(vopt_if pulseaudio pulseaudio-devel)
  $(vopt_if sndio sndio-devel)"
@@ -74,7 +74,7 @@ fi
 
 if [ "$CROSS_BUILD" ]; then
 	case "${XBPS_TARGET_MACHINE}" in
-		# aarch64*) ;;
+		aarch64*) ;;
 		*) nocross="chromium can not be cross compiled for this architecture" ;;
 	esac
 fi
@@ -222,12 +222,14 @@ do_configure() {
 		"use_lld=$(vopt_if clang true false)"
 		'clang_use_chrome_plugins=false'
 		'clang_base_path="/usr"'
+        "clang_cross_path=\"${XBPS_CROSS_BASE}\""
 		"clang_version=\"${clang_version%%.*}\""
 
 		"use_custom_libcxx=$(vopt_if libcxx true false)" # https://github.com/llvm/llvm-project/issues/61705
 
 		'enable_rust=true'
 		'rust_sysroot_absolute="/usr"'
+		"rust_cross_sysroot_absolute=\"${XBPS_CROSS_BASE}\""
 		'rust_bindgen_root="/usr"'
 		"rustc_version=\"$(rustc --version)\""
 
