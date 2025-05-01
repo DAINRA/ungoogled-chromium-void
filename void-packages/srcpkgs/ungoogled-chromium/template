@@ -222,7 +222,7 @@ do_configure() {
 		"use_lld=$(vopt_if clang true false)"
 		'clang_use_chrome_plugins=false'
 		'clang_base_path="/usr"'
-        "clang_cross_path=\"${XBPS_CROSS_BASE}\""
+		"clang_cross_path=\"${XBPS_CROSS_BASE}\""
 		"clang_version=\"${clang_version%%.*}\""
 
 		"use_custom_libcxx=$(vopt_if libcxx true false)" # https://github.com/llvm/llvm-project/issues/61705
@@ -246,8 +246,6 @@ do_configure() {
 
 		'use_system_harfbuzz=false'
 		'use_system_libffi=true'
-
-		'clang_warning_suppression_file=""'
 
 		'use_qt=false'
 
@@ -340,14 +338,13 @@ do_build() {
 	export RUSTC_BOOTSTRAP=1
 
 	_setup_toolchain
-	CCACHE_SLOPPINESS=include_file_mtime ninja -C out/Release ${makejobs} chrome chrome_sandbox chromedriver chrome_crashpad_handler
+	CCACHE_SLOPPINESS=include_file_mtime ninja -C out/Release ${makejobs} chrome chromedriver.unstripped chrome_crashpad_handler
 }
 
 do_install() {
 	vinstall out/Release/chrome 755 usr/lib/${pkgname} ${pkgname}
-	vinstall out/Release/chrome_sandbox 4755 usr/lib/${pkgname} chrome-sandbox
 	vinstall out/Release/chrome_crashpad_handler 755 usr/lib/${pkgname} chrome_crashpad_handler
-	vinstall out/Release/chromedriver 755 usr/lib/${pkgname} chromedriver
+	vinstall out/Release/chromedriver.unstripped 755 usr/lib/${pkgname} chromedriver
 	vinstall out/Release/libEGL.so 755 usr/lib/${pkgname} libEGL.so
 	vinstall out/Release/libGLESv2.so 755 usr/lib/${pkgname} libGLESv2.so
 	vinstall out/Release/libvk_swiftshader.so 755 usr/lib/${pkgname} libvk_swiftshader.so
