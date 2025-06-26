@@ -1,6 +1,6 @@
 --- a/build/config/clang/BUILD.gn
 +++ b/build/config/clang/BUILD.gn
-@@ -210,12 +210,15 @@
+@@ -210,14 +210,20 @@
        } else if (is_linux || is_chromeos) {
 +        _dir = "linux"
          if (current_cpu == "x64") {
