@@ -1,9 +1,9 @@
 --- a/build/rust/known-target-triples.txt
 +++ b/build/rust/known-target-triples.txt
-@@ -41,5 +41,6 @@
+@@ -41,5 +41,5 @@
  x86_64-pc-windows-msvc
  x86_64-unknown-fuchsia
- x86_64-unknown-linux-gnu
+-x86_64-unknown-linux-gnu
 +x86_64-unknown-linux-musl
  powerpc64le-unknown-linux-gnu
  s390x-unknown-linux-gnu
