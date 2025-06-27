@@ -1,5 +1,5 @@
---- build/rust/known-target-triples.txt
-+++ build/rust/known-target-triples.txt
+--- a/build/rust/known-target-triples.txt
++++ b/build/rust/known-target-triples.txt
 @@ -41,5 +41,6 @@
  x86_64-pc-windows-msvc
  x86_64-unknown-fuchsia
