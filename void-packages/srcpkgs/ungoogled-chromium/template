@@ -158,7 +158,7 @@ _setup_toolchain() {
 do_configure() {
 	local system=() conf=()
 
-	if true; then
+	if false; then
 		# compile gn early, so it can be used to generate gni stuff
 		AR="ar" CC=$CC_FOR_BUILD CXX=$CXX_FOR_BUILD LD=$CXX_FOR_BUILD \
 			CFLAGS=$CFLAGS_FOR_BUILD CXXFLAGS=$CXXFLAGS_FOR_BUILD LDFLAGS=$LDFLAGS_FOR_BUILD \
@@ -328,7 +328,7 @@ do_configure() {
 		esac
 	fi
 	_setup_toolchain
-	if true; then
+	if false; then
 		out/Release/gn gen out/Release --args="${conf[*]}"
 	else
 		gn gen out/Release --args="${conf[*]}"
