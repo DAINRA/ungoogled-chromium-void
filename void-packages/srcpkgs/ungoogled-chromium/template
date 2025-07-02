@@ -234,6 +234,8 @@ do_configure() {
 		'rust_bindgen_root="/usr"'
 		"rustc_version=\"$(rustc --version)\""
 
+		'node_version_check=false'
+
 		# is_debug makes the build a debug build, changes some things.
 		# might be useful for real debugging vs just debug symbols.
 		"is_debug=false"
