@@ -33,7 +33,7 @@ homepage="https://github.com/ungoogled-software/ungoogled-chromium"
 # distfiles="https://commondatastorage.googleapis.com/chromium-browser-official/chromium-${version}.tar.xz
 distfiles="https://github.com/chromium-linux-tarballs/chromium-tarballs/releases/download/${version}/chromium-${version}-linux.tar.xz
  ${homepage}/archive/refs/tags/${version}-${revision}.tar.gz"
-checksum="5abd8ab0189d686789f7c7c61c98800a9962b79c12305bdec0d16fc76929fcb7
+checksum="8cd37b224dba4fc5e3c8ac98cc278d17a713a3b5a2f1dbb241ad94caca83d630
  2708a275cc9408b975efcc7afa0a15223dcec47c87188e8516b74a21b9f45d5e"
 
 lib32disabled=yes
