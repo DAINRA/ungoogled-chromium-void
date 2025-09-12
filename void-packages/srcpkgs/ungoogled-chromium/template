@@ -1,7 +1,7 @@
 # Template file for 'ungoogled-chromium'
 pkgname=ungoogled-chromium
 # See https://chromiumdash.appspot.com/releases?platform=Linux for the latest version
-version=139.0.7258.154
+version=140.0.7339.127
 revision=1
 archs="i686* x86_64* aarch64* armv7l*"
 _llvmver=19
@@ -34,8 +34,8 @@ distfiles="https://github.com/chromium-linux-tarballs/chromium-tarballs/releases
  ${homepage}/archive/refs/tags/${version}-${revision}.tar.gz"
 # distfiles="https://chromium-tarballs.distfiles.gentoo.org/chromium-${version}.tar.xz"
 # distfiles="https://chromium.googlesource.com/chromium/src.git/+archive/refs/tags/${version}.tar.gz"
-checksum="b8d77d5daaede589a5f77ea79bf3e11ada53ab7ace1ca083cc2e5399d9bc53e8
- f70d1e9b180fcf4e65cb07a632c781aee02e11a3f6cb218974287f81a8e7122e"
+checksum="e1ae3f0fc46cbc9a1b81c20b47b20bf0f75751494ce2bfd0ea73ef856a6a3f36
+ 471a5ff29e01a8e7092e8ea88391a3d6cce196054db66d44ca70a068e3de3e9b"
 
 lib32disabled=yes
 
@@ -97,6 +97,9 @@ post_patch() {
 	# allow system dependencies in "official builds"
 	vsed -i 's/OFFICIAL_BUILD/GOOGLE_CHROME_BUILD/' \
 		tools/generate_shim_headers/generate_shim_headers.py
+
+  # For some reason the patch.args file gets ignored
+	patch -Np1 -R -i "${FILESDIR}"/chromium-140-8393b61.patch
 
 	# Ungoogled Chromium prune, patch, domain substitution
 	msg_normal "Applying Feng Shui Shaders ...\n"
