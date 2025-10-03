@@ -6,12 +6,19 @@ concurrency:
 
 on:
   workflow_dispatch:
+  push:
+    branches:
+      - master
+    paths:
+      - 'void-packages/srcpkgs/ungoogled-chromium/**'
 
 jobs:
   Fetch:
+    if: github.repository == 'DAINRA/ungoogled-chromium-void'
     runs-on: self-hosted
     outputs:
-      version: ${{ steps.version.outputs.version }}
+      ver: ${{ steps.version.outputs.ver }}
+      rev: ${{ steps.version.outputs.rev }}
     environment:
       name: release
     steps:
@@ -32,7 +39,8 @@ jobs:
 
       - id: version
         run: |
-          echo "version=$( cat master/version )" >> $GITHUB_OUTPUT
+          echo "ver=$( grep -m 1 'version=' master/void-packages/srcpkgs/ungoogled-chromium/template | awk -F '=' '{ print $2 }' )" >> $GITHUB_OUTPUT
+          echo "rev=$( grep -m 1 'revision=' master/void-packages/srcpkgs/ungoogled-chromium/template | awk -F '=' '{ print $2 }' )" >> $GITHUB_OUTPUT
 
   Bootstrap:
     needs: [Fetch]
@@ -48,8 +56,21 @@ jobs:
           ./xbps-src -H /repository -A ${{ matrix.arch }} binary-bootstrap
           ./xbps-src -H /repository -A ${{ matrix.arch }} fetch ungoogled-chromium
 
+  Configure:
+    needs: [Bootstrap]
+    strategy:
+      max-parallel: 1
+      matrix:
+        arch: [x86_64, x86_64-musl]
+    runs-on: self-hosted
+    steps:
+      - name: Configure ${{ matrix.arch }}
+        run: |
+          cd void-packages
+          ./xbps-src -H /repository -A ${{ matrix.arch }} -C configure ungoogled-chromium
+
   Build:
-    needs: [Fetch, Bootstrap]
+    needs: [Fetch, Configure]
     strategy:
       max-parallel: 1
       matrix:
@@ -58,6 +79,7 @@ jobs:
     timeout-minutes: 1440
     env:
       XBPS_TARGET_ARCH: ${{ matrix.arch }}
+      XBPS_PASSPHRASE: ${{ secrets.SUPERBIA }}
     steps:
       - name: Build ${{ matrix.arch }}
         run: |
@@ -66,34 +88,25 @@ jobs:
       - name: Sign ${{ matrix.arch }} package
         run: |
           cd /repository/binpkgs
-          xbps-rindex -r $PWD
-          XBPS_PASSPHRASE=${{ secrets.SUPERBIA }} xbps-rindex --sign --signedby "Shiraori archive" --privkey /repository/shiraori.pem $PWD
-          XBPS_PASSPHRASE=${{ secrets.SUPERBIA }} xbps-rindex --sign-pkg --privkey /repository/shiraori.pem $PWD/*.xbps
-          xbps-rindex -c $PWD
-          sha256sum ungoogled-chromium-${{ needs.Fetch.outputs.version }}.${{ matrix.arch }}.xbps | tee -a ${{ github.workspace }}/void-packages/sum
-
-  Release:
-    needs: [Fetch, Build]
-    runs-on: self-hosted
-    steps:
-      - name: Checksum check
-        run: |
-          cd /repository/binpkgs
-          cat ${{ github.workspace }}/void-packages/sum | sha256sum -c
-
-      - name: Publish
+          rm -f ${{ matrix.arch }}-repodata
+          xbps-rindex -a ungoogled-chromium-${{ needs.Fetch.outputs.ver }}_${{ needs.Fetch.outputs.rev }}.${{ matrix.arch }}.xbps
+          xbps-rindex --sign --signedby "Shiraori archive" --privkey /repository/shiraori.pem $PWD
+          xbps-rindex --sign-pkg --privkey /repository/shiraori.pem ungoogled-chromium-${{ needs.Fetch.outputs.ver }}_${{ needs.Fetch.outputs.rev }}.${{ matrix.arch }}.xbps
+      - name: Release ${{ matrix.arch }} assets
         uses: softprops/action-gh-release@v2
+        if: github.ref_type == 'tag'
         with:
-          body_path: ${{ github.workspace }}/void-packages/sum
+          body: |
+            Chromium release: <a href='https://chromium.googlesource.com/chromium/src/+/refs/tags/${{ needs.Fetch.outputs.ver }}'>${{ needs.Fetch.outputs.ver }}</a>
+            Ungoogled Chromium release: <a href='https://github.com/ungoogled-software/ungoogled-chromium/releases/tag/${{ needs.Fetch.outputs.ver }}-${{ needs.Fetch.outputs.rev }}'>${{ needs.Fetch.outputs.ver }}-${{ needs.Fetch.outputs.rev }}</a>
           files: |
-            /repository/binpkgs/ungoogled-chromium-${{ needs.Fetch.outputs.version }}.*.xbps
-            /repository/binpkgs/ungoogled-chromium-${{ needs.Fetch.outputs.version }}.*.sig
-            /repository/binpkgs/ungoogled-chromium-${{ needs.Fetch.outputs.version }}.*.sig2
-            /repository/binpkgs/*-repodata
-          tag_name: ${{ needs.Fetch.outputs.version }}
+            /repository/binpkgs/ungoogled-chromium-${{ needs.Fetch.outputs.ver }}_${{ needs.Fetch.outputs.rev }}.${{ matrix.arch }}.xbps
+            /repository/binpkgs/ungoogled-chromium-${{ needs.Fetch.outputs.ver }}_${{ needs.Fetch.outputs.rev }}.${{ matrix.arch }}.xbps.sig2
+            /repository/binpkgs/${{ matrix.arch }}-repodata
+          tag_name: ${{ needs.Fetch.outputs.ver }}_${{ needs.Fetch.outputs.rev }}
 
   Cleanup:
-    needs: [Release]
+    needs: [Build]
     runs-on: self-hosted
     steps:
       - name: Cleanup old release files
