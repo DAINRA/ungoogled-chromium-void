@@ -1,7 +1,7 @@
 # Template file for 'ungoogled-chromium'
 pkgname=ungoogled-chromium
 # See https://chromiumdash.appspot.com/releases?platform=Linux for the latest version
-version=140.0.7339.207
+version=141.0.7390.54
 revision=1
 archs="i686* x86_64* aarch64* armv7l*"
 _llvmver=19
@@ -9,7 +9,7 @@ hostmakedepends="
  $(vopt_if clang "clang${_llvmver} lld${_llvmver} llvm${_llvmver} compiler-rt${_llvmver}")
  bison git gperf hwids ninja nodejs perl pkg-config python3
  libepoxy-devel libglib-devel rust rust-bindgen
- gn"
+ gn $(vopt_if qt6 qt6-base)"
 makedepends="
  alsa-lib-devel libdav1d-devel brotli-devel cups-devel elfutils-devel
  fontconfig-devel freetype-devel gtk+3-devel libXScrnSaver-devel
@@ -23,7 +23,8 @@ makedepends="
  compiler-rt${_llvmver} rust-std
  $(vopt_if pipewire pipewire-devel)
  $(vopt_if pulseaudio pulseaudio-devel)
- $(vopt_if sndio sndio-devel)"
+ $(vopt_if sndio sndio-devel)
+ $(vopt_if qt6 qt6-base-devel)"
 depends="desktop-file-utils hicolor-icon-theme hwids xdg-utils"
 short_desc="Google Chromium, sans integration with Google"
 maintainer="Dainra <an.costea.2015@gmail.com>"
@@ -34,8 +35,8 @@ distfiles="https://github.com/chromium-linux-tarballs/chromium-tarballs/releases
  ${homepage}/archive/refs/tags/${version}-${revision}.tar.gz"
 # distfiles="https://chromium-tarballs.distfiles.gentoo.org/chromium-${version}.tar.xz"
 # distfiles="https://chromium.googlesource.com/chromium/src.git/+archive/refs/tags/${version}.tar.gz"
-checksum="0bf46d975d4f9fdeed6136b564b6e1ebaef560f20ca60cbfffa822ef7dec5153
- 6592c09f06a2adcbfc8dba3e216dc3a08ca2f8c940fc2725af90c5d042404be9"
+checksum="d4cc88d061e052cd46b4819e997d3a5ab7a3e87b6a5755e618a1664477271026
+ 3100bdab2734831ab1cdf7bbd3f4c24e55d51b3e4bda3a1ba668f54ab4aeff80"
 
 lib32disabled=yes
 
@@ -43,8 +44,8 @@ create_wrksrc=yes
 build_wrksrc="chromium-${version}"
 patch_args="-d ${build_wrksrc} -Np1"
 
-build_options="clang libcxx debug vaapi pulseaudio sndio pipewire lto drumbrake"
-build_options_default="clang libcxx vaapi pulseaudio pipewire"
+build_options="clang libcxx debug vaapi pulseaudio sndio pipewire lto drumbrake qt6"
+build_options_default="clang libcxx vaapi pulseaudio pipewire qt6"
 desc_option_clang="Use clang to build"
 desc_option_libcxx="Use bundled libc++"
 desc_option_debug="Build with debug symbols"
@@ -68,7 +69,7 @@ if [ "$CROSS_BUILD" ]; then
 	 libcurl-devel snappy-devel libXrandr-devel libXcomposite-devel cups-devel
 	 mit-krb5-devel alsa-lib-devel libXdamage-devel libepoxy-devel libevdev-devel
 	 libavif-devel libaom-devel libdav1d-devel libflac-devel
-	 libdrm-devel libgbm-devel"
+	 libdrm-devel libgbm-devel $(vopt_if qt6 qt6-base-devel)"
 fi
 
 if [ ! "$XBPS_WORDSIZE" = "$XBPS_TARGET_WORDSIZE" ]; then
@@ -228,6 +229,7 @@ do_configure() {
 		'clang_base_path="/usr"'
 		"clang_cross_path=\"${XBPS_CROSS_BASE}\""
 		"clang_version=\"${clang_version%%.*}\""
+		'use_clang_modules=false' # not yet supported with void's libcxx
 
 		"use_custom_libcxx=$(vopt_if libcxx true false)" # https://github.com/llvm/llvm-project/issues/61705
 
@@ -254,7 +256,8 @@ do_configure() {
 		'use_system_libffi=true'
 
 		'use_qt5=false'
-		'use_qt6=false'
+		"use_qt6=$(vopt_if qt6 true false)"
+		'moc_qt6_path="/usr/lib/qt6/libexec"'
 
 		'use_cups=true'
 
@@ -357,6 +360,7 @@ do_install() {
 	vinstall out/Release/libGLESv2.so 755 usr/lib/${pkgname} libGLESv2.so
 	vinstall out/Release/libvk_swiftshader.so 755 usr/lib/${pkgname} libvk_swiftshader.so
 	vinstall out/Release/vk_swiftshader_icd.json 755 usr/lib/${pkgname} vk_swiftshader_icd.json
+	vinstall out/Release/libqt6_shim.so 755 usr/lib/${pkgname} libqt6_shim.so
 
 	vcopy "out/Release/*.bin" usr/lib/${pkgname}
 	vcopy "out/Release/*.pak" usr/lib/${pkgname}
@@ -391,4 +395,12 @@ do_install() {
 		-e 's/@@USR_BIN_SYMLINK_NAME@@/ungoogled-chromium/g' \
 		${DESTDIR}/usr/share/man/man1/${pkgname}.1 \
 		${DESTDIR}/usr/share/applications/${pkgname}.desktop
+}
+
+ungoogled-chromium-qt6_package() {
+	depends="${sourcepkg}>=${version}_${revision}"
+	short_desc+=" - Qt6 integration"
+	pkg_install() {
+		vmove usr/lib/${sourcepkg}/libqt6_shim.so
+	}
 }
