@@ -90,8 +90,10 @@ jobs:
           cd /repository/binpkgs
           rm -f ${{ matrix.arch }}-repodata
           xbps-rindex -a ungoogled-chromium-${{ needs.Fetch.outputs.ver }}_${{ needs.Fetch.outputs.rev }}.${{ matrix.arch }}.xbps
+          xbps-rindex -a ungoogled-chromium-qt6-${{ needs.Fetch.outputs.ver }}_${{ needs.Fetch.outputs.rev }}.${{ matrix.arch }}.xbps
           xbps-rindex --sign --signedby "Shiraori archive" --privkey /repository/shiraori.pem $PWD
           xbps-rindex --sign-pkg --privkey /repository/shiraori.pem ungoogled-chromium-${{ needs.Fetch.outputs.ver }}_${{ needs.Fetch.outputs.rev }}.${{ matrix.arch }}.xbps
+          xbps-rindex --sign-pkg --privkey /repository/shiraori.pem ungoogled-chromium-qt6-${{ needs.Fetch.outputs.ver }}_${{ needs.Fetch.outputs.rev }}.${{ matrix.arch }}.xbps
       - name: Release ${{ matrix.arch }} assets
         uses: softprops/action-gh-release@v2
         with:
@@ -100,7 +102,9 @@ jobs:
             Ungoogled Chromium release: <a href='https://github.com/ungoogled-software/ungoogled-chromium/releases/tag/${{ needs.Fetch.outputs.ver }}-${{ needs.Fetch.outputs.rev }}'>${{ needs.Fetch.outputs.ver }}-${{ needs.Fetch.outputs.rev }}</a>
           files: |
             /repository/binpkgs/ungoogled-chromium-${{ needs.Fetch.outputs.ver }}_${{ needs.Fetch.outputs.rev }}.${{ matrix.arch }}.xbps
+            /repository/binpkgs/ungoogled-chromium-qt6-${{ needs.Fetch.outputs.ver }}_${{ needs.Fetch.outputs.rev }}.${{ matrix.arch }}.xbps
             /repository/binpkgs/ungoogled-chromium-${{ needs.Fetch.outputs.ver }}_${{ needs.Fetch.outputs.rev }}.${{ matrix.arch }}.xbps.sig2
+            /repository/binpkgs/ungoogled-chromium-qt6-${{ needs.Fetch.outputs.ver }}_${{ needs.Fetch.outputs.rev }}.${{ matrix.arch }}.xbps.sig2
             /repository/binpkgs/${{ matrix.arch }}-repodata
           tag_name: ${{ needs.Fetch.outputs.ver }}_${{ needs.Fetch.outputs.rev }}
 
