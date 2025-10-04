@@ -401,6 +401,6 @@ chromium-qt6_package() {
 	depends="${sourcepkg}>=${version}_${revision}"
 	short_desc+=" - Qt6 integration"
 	pkg_install() {
-		vmove usr/lib/chromium/libqt6_shim.so
+		vmove usr/lib/${pkgname}/libqt6_shim.so
 	}
 }
