@@ -1,7 +1,8 @@
 # Ungoogled Chromium for Void Linux  
 Ungoogled Chromium template and builds for Void Linux, based on the void-packages [chromium][1] template.
 
-![GitHub release (latest by date)](https://img.shields.io/github/v/release/DAINRA/ungoogled-chromium-void?style=flat-square)
+<!-- VERSION-INFO-START -->
+<!-- VERSION-INFO-END -->
 
 ## Content Overview
 
