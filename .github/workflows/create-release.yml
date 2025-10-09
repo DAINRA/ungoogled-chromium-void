@@ -22,6 +22,10 @@ jobs:
     environment:
       name: release
     steps:
+      - name: Exit early if [ci-skip]
+        run: |
+          echo "${{ github.event.head_commit.message }}" | grep -iqE '\[ci-skip\]|\[skip ci\]' && exit 0
+
       - name: Fetch repository
         uses: actions/checkout@v4
         with:
