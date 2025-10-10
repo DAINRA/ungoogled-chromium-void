@@ -24,7 +24,10 @@ jobs:
     steps:
       - name: Exit early if [ci-skip]
         run: |
-          echo "${{ github.event.head_commit.message }}" | grep -iqE '\[ci-skip\]|\[skip ci\]' && exit 0
+          if echo "${{ github.event.head_commit.message }}" | grep -iqE '\[ci-skip\]|\[skip ci\]'; then
+            echo "Skipping CI due to commit message."
+            exit 0
+          fi
 
       - name: Fetch repository
         uses: actions/checkout@v4
