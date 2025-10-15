@@ -1,7 +1,7 @@
 # Template file for 'ungoogled-chromium'
 pkgname=ungoogled-chromium
 # See https://chromiumdash.appspot.com/releases?platform=Linux for the latest version
-version=141.0.7390.76
+version=141.0.7390.107
 revision=1
 archs="i686* x86_64* aarch64* armv7l*"
 _llvmver=19
@@ -30,11 +30,11 @@ short_desc="Google Chromium, sans integration with Google"
 maintainer="Dainra <an.costea.2015@gmail.com>"
 license="BSD-3-Clause"
 homepage="https://github.com/ungoogled-software/ungoogled-chromium"
-_commit_id="" #cachegen
+_commit_id="11b9b4f0eb6efa7e98f032dec2294c9a169c49b8" #cachegen
 distfiles="https://github.com/chromium-linux-tarballs/chromium-tarballs/releases/download/${version}/chromium-${version}-linux.tar.xz
 ${homepage}/archive/$( [[ -n "${_commit_id:-}" ]] && echo "${_commit_id}.tar.gz" || echo "refs/tags/${version}-${revision}.tar.gz" )"
-checksum="434330aef1adc85af0ecc01f33beea3b2c9d952c18f366def4837852b536f708
- 99258d51663c53a2627fb6a0c1ba40e9cb9371fef3b1a3e8eebee7a573e15887"
+checksum="6c68315da07f58b804417332d7e0bed2103991b53e2497ed1c01aeb4c634def4
+ 89400d476e7cc9daa3f71c15ff8d05d2081c8abf4aeb20a88c2daf84612ae5d9"
 
 lib32disabled=yes
 
