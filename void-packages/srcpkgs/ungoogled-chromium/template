@@ -30,11 +30,11 @@ short_desc="Google Chromium, sans integration with Google"
 maintainer="Dainra <an.costea.2015@gmail.com>"
 license="BSD-3-Clause"
 homepage="https://github.com/ungoogled-software/ungoogled-chromium"
-_commit_id="11b9b4f0eb6efa7e98f032dec2294c9a169c49b8" #cachegen
+_commit_id="" #cachegen
 distfiles="https://github.com/chromium-linux-tarballs/chromium-tarballs/releases/download/${version}/chromium-${version}-linux.tar.xz
 ${homepage}/archive/$( [[ -n "${_commit_id:-}" ]] && echo "${_commit_id}.tar.gz" || echo "refs/tags/${version}-${revision}.tar.gz" )"
 checksum="6c68315da07f58b804417332d7e0bed2103991b53e2497ed1c01aeb4c634def4
- 89400d476e7cc9daa3f71c15ff8d05d2081c8abf4aeb20a88c2daf84612ae5d9"
+ 338bebdad1766880d1ea0fcab344f1c64eb7bc78d73ae41f70da222d24793afb"
 
 lib32disabled=yes
 
@@ -345,7 +345,11 @@ do_build() {
 	export RUSTC_BOOTSTRAP=1
 
 	_setup_toolchain
+	msg_normal "Zeroing Crime Network ...\n"
+	ccache -z
 	CCACHE_SLOPPINESS=include_file_mtime ninja -C out/Release ${makejobs} chrome chrome_sandbox chromedriver chrome_crashpad_handler
+	msg_normal "Inserting Sublimated Messages ...\n"
+	ccache -s
 }
 
 do_install() {

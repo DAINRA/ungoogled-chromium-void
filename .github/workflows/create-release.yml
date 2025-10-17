@@ -19,38 +19,48 @@ jobs:
     outputs:
       ver: ${{ steps.version.outputs.ver }}
       rev: ${{ steps.version.outputs.rev }}
+      skip_ci: ${{ steps.ci_skip_check.outputs.skip_ci }}
     environment:
       name: release
     steps:
-      - name: Exit early if [ci-skip]
+      - name: Check for [ci-skip] in commit message
+        id: ci_skip_check
         run: |
           if echo "${{ github.event.head_commit.message }}" | grep -iqE '\[ci-skip\]|\[skip ci\]'; then
-            echo "Skipping CI due to commit message."
-            exit 0
+            echo "CI skip detected. Skipping further steps."
+            echo "skip_ci=true" >> $GITHUB_OUTPUT
+          else
+            echo "skip_ci=false" >> $GITHUB_OUTPUT
           fi
+        shell: bash
 
       - name: Fetch repository
+        if: steps.ci_skip_check.outputs.skip_ci == 'false'
         uses: actions/checkout@v4
         with:
           path: master
 
       - name: Fetch void-packages
+        if: steps.ci_skip_check.outputs.skip_ci == 'false'
         uses: actions/checkout@v4
         with:
           repository: void-linux/void-packages
           path: void-packages
 
       - name: Configure void-packages
+        if: steps.ci_skip_check.outputs.skip_ci == 'false'
         run: |
           cp -r master/void-packages ./ 2>/dev/null
 
       - id: version
+        if: steps.ci_skip_check.outputs.skip_ci == 'false'
         run: |
           echo "ver=$( grep -m 1 'version=' master/void-packages/srcpkgs/ungoogled-chromium/template | awk -F '=' '{ print $2 }' )" >> $GITHUB_OUTPUT
           echo "rev=$( grep -m 1 'revision=' master/void-packages/srcpkgs/ungoogled-chromium/template | awk -F '=' '{ print $2 }' )" >> $GITHUB_OUTPUT
 
   Bootstrap:
     needs: [Fetch]
+    if: needs.Fetch.outputs.skip_ci == 'false'
     strategy:
       max-parallel: 1
       matrix:
@@ -65,6 +75,7 @@ jobs:
 
   Configure:
     needs: [Bootstrap]
+    if: needs.Fetch.outputs.skip_ci == 'false'
     strategy:
       max-parallel: 1
       matrix:
@@ -78,6 +89,7 @@ jobs:
 
   Build:
     needs: [Fetch, Configure]
+    if: needs.Fetch.outputs.skip_ci == 'false'
     strategy:
       max-parallel: 1
       matrix:
@@ -92,6 +104,7 @@ jobs:
         run: |
           cd void-packages
           ./xbps-src -H /repository -A ${{ matrix.arch }} -C pkg ungoogled-chromium
+
       - name: Sign ${{ matrix.arch }} package
         run: |
           cd /repository/binpkgs
@@ -101,6 +114,7 @@ jobs:
           xbps-rindex --sign --signedby "Shiraori archive" --privkey /repository/shiraori.pem $PWD
           xbps-rindex --sign-pkg --privkey /repository/shiraori.pem ungoogled-chromium-${{ needs.Fetch.outputs.ver }}_${{ needs.Fetch.outputs.rev }}.${{ matrix.arch }}.xbps
           xbps-rindex --sign-pkg --privkey /repository/shiraori.pem ungoogled-chromium-qt6-${{ needs.Fetch.outputs.ver }}_${{ needs.Fetch.outputs.rev }}.${{ matrix.arch }}.xbps
+
       - name: Release ${{ matrix.arch }} assets
         uses: softprops/action-gh-release@v2
         with:
@@ -117,6 +131,7 @@ jobs:
 
   Cleanup:
     needs: [Build]
+    if: needs.Fetch.outputs.skip_ci == 'false'
     runs-on: self-hosted
     steps:
       - name: Cleanup old release files
@@ -125,3 +140,4 @@ jobs:
           keep_latest: 5
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
