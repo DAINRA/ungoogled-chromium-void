@@ -1,7 +1,7 @@
 # Template file for 'ungoogled-chromium'
 pkgname=ungoogled-chromium
 # See https://chromiumdash.appspot.com/releases?platform=Linux for the latest version
-version=141.0.7390.107
+version=141.0.7390.122
 revision=1
 archs="i686* x86_64* aarch64* armv7l*"
 _llvmver=19
@@ -33,8 +33,8 @@ homepage="https://github.com/ungoogled-software/ungoogled-chromium"
 _commit_id="" #cachegen
 distfiles="https://github.com/chromium-linux-tarballs/chromium-tarballs/releases/download/${version}/chromium-${version}-linux.tar.xz
 ${homepage}/archive/$( [[ -n "${_commit_id:-}" ]] && echo "${_commit_id}.tar.gz" || echo "refs/tags/${version}-${revision}.tar.gz" )"
-checksum="6c68315da07f58b804417332d7e0bed2103991b53e2497ed1c01aeb4c634def4
- 338bebdad1766880d1ea0fcab344f1c64eb7bc78d73ae41f70da222d24793afb"
+checksum="38419384a6d8b2415b1628a0d20d3cfd67b0ea2b93886572a931b45e41d1a699
+ d8b02cce3f1852f1caa543b0e9704440e8591eb20ff64e8fb9e9eec147428699"
 
 lib32disabled=yes
 
