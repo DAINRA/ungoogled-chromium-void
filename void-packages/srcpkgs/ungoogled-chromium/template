@@ -1,7 +1,7 @@
 # Template file for 'ungoogled-chromium'
 pkgname=ungoogled-chromium
 # See https://chromiumdash.appspot.com/releases?platform=Linux for the latest version
-version=141.0.7390.122
+version=142.0.7444.59
 revision=1
 archs="i686* x86_64* aarch64* armv7l*"
 _llvmver=19
@@ -33,8 +33,8 @@ homepage="https://github.com/ungoogled-software/ungoogled-chromium"
 _commit_id="" #cachegen
 distfiles="https://github.com/chromium-linux-tarballs/chromium-tarballs/releases/download/${version}/chromium-${version}-linux.tar.xz
 ${homepage}/archive/$( [[ -n "${_commit_id:-}" ]] && echo "${_commit_id}.tar.gz" || echo "refs/tags/${version}-${revision}.tar.gz" )"
-checksum="38419384a6d8b2415b1628a0d20d3cfd67b0ea2b93886572a931b45e41d1a699
- d8b02cce3f1852f1caa543b0e9704440e8591eb20ff64e8fb9e9eec147428699"
+checksum="6663d346462a1785721c8358eb5c3c952ae8273e4e95835d0a567285d1cab494
+ 374e1906cfbdd3bf6e6548c108ee8200f1bb35ce72f745c44d3b1ad07f9d72cb"
 
 lib32disabled=yes
 
@@ -82,6 +82,10 @@ if [ "$CROSS_BUILD" ]; then
 fi
 
 pre_patch() { [ -n "${_commit_id:-}" ] && [ -d "../${pkgname}-${_commit_id}" ] && mv "../${pkgname}-${_commit_id}" "../${pkgname}-${version}-${revision}"; true; }
+
+if [ "$build_option_qt6" ]; then
+	subpackages+=" ungoogled-chromium-qt6"
+fi
 
 post_patch() {
 	if [ "$XBPS_TARGET_LIBC" = "musl" ]; then
@@ -254,7 +258,6 @@ do_configure() {
 
 		'use_qt5=false'
 		"use_qt6=$(vopt_if qt6 true false)"
-		'moc_qt6_path="/usr/lib/qt6/libexec"'
 
 		'use_cups=true'
 
@@ -299,6 +302,10 @@ do_configure() {
 	msg_normal "Obfuscating Quigley Matrix ...\n"
 	local ucdir="../${pkgname}-${version}-${revision}"
 	readarray -t -O ${#conf[@]} conf < "${ucdir}/flags.gn"
+
+	if [ "$build_option_qt6" ];then
+		conf+=('moc_qt6_path="/usr/lib/qt6/libexec"')
+	fi
 
 	if [ "$CROSS_BUILD" ]; then
 		conf+=(
@@ -361,7 +368,9 @@ do_install() {
 	vinstall out/Release/libGLESv2.so 755 usr/lib/${pkgname} libGLESv2.so
 	vinstall out/Release/libvk_swiftshader.so 755 usr/lib/${pkgname} libvk_swiftshader.so
 	vinstall out/Release/vk_swiftshader_icd.json 755 usr/lib/${pkgname} vk_swiftshader_icd.json
-	vinstall out/Release/libqt6_shim.so 755 usr/lib/${pkgname} libqt6_shim.so
+	if [ $build_option_qt6 ]; then
+		vinstall out/Release/libqt6_shim.so 755 usr/lib/${pkgname} libqt6_shim.so
+	fi
 
 	vcopy "out/Release/*.bin" usr/lib/${pkgname}
 	vcopy "out/Release/*.pak" usr/lib/${pkgname}
