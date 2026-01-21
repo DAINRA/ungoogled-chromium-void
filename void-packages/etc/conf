@@ -1,3 +1,3 @@
 XBPS_CCACHE=yes
-XBPS_MAKEJOBS=6
+XBPS_MAKEJOBS=26
 # XBPS_MIRROR=https://mirrors.dotsrc.org/voidlinux/current
