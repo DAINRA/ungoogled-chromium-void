@@ -406,7 +406,7 @@ do_install() {
 		-e 's/@@MENUNAME@@/Ungoogled-Chromium/g' \
 		-e 's/@@PACKAGE@@/ungoogled-chromium/g' \
 		-e 's/@@USR_BIN_SYMLINK_NAME@@/ungoogled-chromium/g' \
-		-e 's/@@URI_SCHEME@@/ungoogled-chromium/g' \
+		-e '/@@URI_SCHEME@@/d' \
 		-e '/@@EXTRA_DESKTOP_ENTRIES@@/d' \
 		${DESTDIR}/usr/share/man/man1/${pkgname}.1 \
 		${DESTDIR}/usr/share/applications/${pkgname}.desktop
