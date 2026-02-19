@@ -1,7 +1,7 @@
 # Template file for 'ungoogled-chromium'
 pkgname=ungoogled-chromium
 # See https://chromiumdash.appspot.com/releases?platform=Linux for the latest version
-version=144.0.7559.132
+version=145.0.7632.75
 revision=1
 archs="i686* x86_64* aarch64* armv7l*"
 _llvmver=21
@@ -36,8 +36,8 @@ _commit_id="" #cachegen
 # distfiles="https://chromium.googlesource.com/chromium/src.git/+archive/refs/tags/${version}.tar.gz
 distfiles="https://github.com/chromium-linux-tarballs/chromium-tarballs/releases/download/${version}/chromium-${version}-linux.tar.xz
  ${homepage}/archive/$( [[ -n "${_commit_id:-}" ]] && echo "${_commit_id}.tar.gz" || echo "refs/tags/${version}-${revision}.tar.gz" )"
-checksum="41cc60391836575f4a40ffd576f647c0b9105219acb494e739c9ea2c66f5ddb9
- 64190ebab8b29b8225db8cb9fcef6607b0840387062b65abee36983a9fdaa7c4"
+checksum="a4171659f5b92074cdf09583622db7ef224486c7f63dbd2c4b13808e6c40746b
+ ba956eb1779fcb76dd00f5bc63c0e2e9399270d7942e1f003765dbbbc61cb18d"
 
 lib32disabled=yes
 
@@ -86,6 +86,7 @@ fi
 
 pre_patch() { [ -n "${_commit_id:-}" ] && [ -d "../${pkgname}-${_commit_id}" ] && mv "../${pkgname}-${_commit_id}" "../${pkgname}-${version}-${revision}"; true; }
 
+subpackages="" # xbps-src does not reset the variable
 if [ "$build_option_qt6" ]; then
 	subpackages+=" ungoogled-chromium-qt6"
 fi
@@ -109,6 +110,10 @@ post_patch() {
 	# Ungoogled Chromium prune, patch, domain substitution
 	msg_normal "Applying Feng Shui Shaders ...\n"
 	local ucdir="../${pkgname}-${version}-${revision}"
+	# Remove conflicting patches
+	msg_normal "Reverse Engineering Image Consultant ...\n"
+	# Rather than removing 3 patches from the void package remove build-with-wasm-rollup.patch
+	sed -i '\|^core/ungoogled-chromium/build-with-wasm-rollup\.patch$|d' ${ucdir}/patches/series
 	msg_normal "Binding Sapling Root System ...\n"
 	$ucdir/utils/prune_binaries.py . $ucdir/pruning.list
 	msg_normal "Calculating Inverse Probability Matrices ...\n"
@@ -119,6 +124,11 @@ post_patch() {
 	mkdir -p third_party/node/linux/node-linux-x64/bin
 	rm -f third_party/node/linux/node-linux-x64/bin/node
 	ln -s /usr/bin/node third_party/node/linux/node-linux-x64/bin/
+
+	(
+		cd third_party/devtools-frontend/src
+		npm ci --ignore-scripts
+	)
 }
 
 _setup_clang() {
@@ -403,13 +413,16 @@ do_install() {
 	vman chrome/app/resources/manpage.1.in ${pkgname}.1
 
 	sed -i \
-		-e 's/@@MENUNAME@@/Ungoogled-Chromium/g' \
-		-e 's/@@PACKAGE@@/ungoogled-chromium/g' \
-		-e 's/@@USR_BIN_SYMLINK_NAME@@/ungoogled-chromium/g' \
-		-e '/@@URI_SCHEME@@/d' \
-		-e '/@@EXTRA_DESKTOP_ENTRIES@@/d' \
+		-e 's/@@MENUNAME/Ungoogled-Chromium/g' \
+		-e 's/@@PACKAGE/ungoogled-chromium/g' \
+		-e 's/@@usr_bin_symlink_name/ungoogled-chromium/g' \
+		-e '/@@uri_scheme/d' \
+		-e '/@@extra_desktop_entries/d' \
 		${DESTDIR}/usr/share/man/man1/${pkgname}.1 \
 		${DESTDIR}/usr/share/applications/${pkgname}.desktop
+	if grep '@@' "${DESTDIR}/usr/share/applications/${pkgname}.desktop"; then
+		msg_error "missing substitution"
+	fi
 }
 
 ungoogled-chromium-qt6_package() {
