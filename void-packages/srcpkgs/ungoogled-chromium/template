@@ -1,7 +1,7 @@
 # Template file for 'ungoogled-chromium'
 pkgname=ungoogled-chromium
 # See https://chromiumdash.appspot.com/releases?platform=Linux for the latest version
-version=147.0.7727.137
+version=148.0.7778.178
 revision=1
 _rollup=4.22.4
 archs="i686* x86_64* aarch64* armv7l*"
@@ -9,7 +9,7 @@ _llvmver=22
 hostmakedepends="
  $(vopt_if clang "clang${_llvmver} lld${_llvmver} llvm${_llvmver} compiler-rt${_llvmver}")
  bison git gperf hwids ninja nodejs perl pkg-config python3
- libepoxy-devel libglib-devel rust rust-bindgen
+ libepoxy-devel libglib-devel rust rust-bindgen esbuild
  gn $(vopt_if qt6 qt6-base)"
 makedepends="
  alsa-lib-devel libdav1d-devel brotli-devel cups-devel elfutils-devel
@@ -38,8 +38,8 @@ _commit_id="" #cachegen
 distfiles="https://github.com/chromium-linux-tarballs/chromium-tarballs/releases/download/${version}/chromium-${version}-linux.tar.xz
  ${homepage}/archive/$( [[ -n "${_commit_id:-}" ]] && echo "${_commit_id}.tar.gz" || echo "refs/tags/${version}-${revision}.tar.gz" )
  https://registry.npmjs.org/@rollup/wasm-node/-/wasm-node-${_rollup}.tgz"
-checksum="f4081241493dfc4f7cb5a06f7a5061ce1a90329c91fc18688b50982141736fc8
- 88736ee761d1f1a54c46faa8c49d2bd24699d4c1ee4670c98ea6def02b68a433
+checksum="e98de6a40890ae63b070d498e36bde272b99cfa85fe174c72b1994fa8fe0dc4d
+ 39ce1309e8808f00f846b368c5b34fd469f4f5335730fd629c00b23fc808c4d4
  ee49bf67bd9bee869405af78162d028e2af0fcfca80497404f56b1b99f272717"
 skip_extraction="wasm-node-${_rollup}.tgz"
 
@@ -95,12 +95,12 @@ if [ "$build_option_qt6" ]; then
 	subpackages+=" ungoogled-chromium-qt6"
 fi
 
-post_extract() {
-	local ucdir="chromium-${version}"
-	rm -rv $ucdir/third_party/devtools-frontend/src/node_modules/rollup
-	mkdir $ucdir/third_party/devtools-frontend/src/node_modules/rollup
-	vsrcextract -C $ucdir/third_party/devtools-frontend/src/node_modules/rollup --strip-components=1 "wasm-node-${_rollup}.tgz"
-}
+# post_extract() {
+# 	local ucdir="chromium-${version}"
+# 	rm -rv $ucdir/third_party/devtools-frontend/src/node_modules/rollup
+# 	mkdir $ucdir/third_party/devtools-frontend/src/node_modules/rollup
+# 	vsrcextract -C $ucdir/third_party/devtools-frontend/src/node_modules/rollup --strip-components=1 "wasm-node-${_rollup}.tgz"
+# }
 
 post_patch() {
 	if [ "$XBPS_TARGET_LIBC" = "musl" ]; then
@@ -124,7 +124,8 @@ post_patch() {
 	# Remove conflicting patches
 	msg_normal "Reverse Engineering Image Consultant ...\n"
 	# Rather than removing 3 patches from the void package remove build-with-wasm-rollup.patch
-	sed -i '\|^core/ungoogled-chromium/build-with-wasm-rollup\.patch$|d' ${ucdir}/patches/series
+	# sed -i '\|^core/ungoogled-chromium/build-with-wasm-rollup\.patch$|d' ${ucdir}/patches/series
+	sed -i "s|'third_party/gperf/cipd/',|# &|g" ${ucdir}/utils/prune_binaries.py
 	msg_normal "Binding Sapling Root System ...\n"
 	$ucdir/utils/prune_binaries.py . $ucdir/pruning.list
 	msg_normal "Calculating Inverse Probability Matrices ...\n"
@@ -135,6 +136,18 @@ post_patch() {
 	mkdir -p third_party/node/linux/node-linux-x64/bin
 	rm -f third_party/node/linux/node-linux-x64/bin/node
 	ln -s /usr/bin/node third_party/node/linux/node-linux-x64/bin/
+
+	rm -rv third_party/devtools-frontend/src/node_modules/rollup
+	mkdir third_party/devtools-frontend/src/node_modules/rollup
+	vsrcextract -C third_party/devtools-frontend/src/node_modules/rollup --strip-components=1 "wasm-node-${_rollup}.tgz"
+
+	rm -vf third_party/devtools-frontend/src/third_party/esbuild/esbuild
+	ln -sv /usr/bin/esbuild third_party/devtools-frontend/src/third_party/esbuild/esbuild
+	rm -rfv third_party/devtools-frontend/src/node_modules/esbuild
+	ln -sv /usr/lib/node_modules/esbuild third_party/devtools-frontend/src/node_modules/esbuild
+
+	rm -vf third_party/gperf/cipd/bin/gperf
+	ln -sv /usr/bin/gperf third_party/gperf/cipd/bin/gperf
 }
 
 _setup_clang() {
